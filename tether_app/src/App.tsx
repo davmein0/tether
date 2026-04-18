@@ -241,8 +241,11 @@ export default function App() {
             )
           ) : (
             <div className="app-layout">
-              {relationship ? (
-                <DoerDashboard relationshipId={relationship.id} />
+              {relationship && firebaseUser ? (
+                <DoerDashboard
+                  currentUserId={firebaseUser.uid}
+                  relationshipId={relationship.id}
+                />
               ) : (
                 <section className="dashboard-panel auth-state-panel">
                   <p className="eyebrow">Connect first</p>
@@ -257,8 +260,11 @@ export default function App() {
                     <h4>Respond with context and encouragement</h4>
                   </div>
                 </div>
-                {relationship ? (
-                  <SupporterDashboard relationshipId={relationship.id} />
+                {relationship && firebaseUser ? (
+                  <SupporterDashboard
+                    currentUserId={firebaseUser.uid}
+                    relationshipId={relationship.id}
+                  />
                 ) : (
                   <p className="empty-state">
                     The supporter view will come alive after the relationship is

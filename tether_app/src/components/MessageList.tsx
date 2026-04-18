@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { db } from "../services/firebase";
 import {
   collection,
@@ -11,10 +11,13 @@ import type { Message } from "../types";
 
 type Props = {
   relationshipId: string;
+  currentUserId: string;
+  peerLabel?: string;
 };
 
-export default function MessageList({ relationshipId }: Props) {
+export default function MessageList({ relationshipId, currentUserId, peerLabel = "Them" }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const q = query(
@@ -30,21 +33,25 @@ export default function MessageList({ relationshipId }: Props) {
     return unsub;
   }, [relationshipId]);
 
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   return (
     <div className="message-list">
-      {messages.map((m, i) => (
-        <article
-          className={`message-bubble ${
-            m.senderId === "supporter" ? "message-bubble-supporter" : "message-bubble-doer"
-          }`}
-          key={`${m.senderId}-${i}-${m.text}`}
-        >
-          <span className="message-sender">
-            {m.senderId === "supporter" ? "Supporter" : "You"}
-          </span>
-          <p>{m.text}</p>
-        </article>
-      ))}
+      {messages.map((m, i) => {
+        const isOwn = m.senderId === currentUserId;
+        return (
+          <article
+            className={`message-bubble ${isOwn ? "message-bubble-doer" : "message-bubble-supporter"}`}
+            key={`${m.senderId}-${i}-${m.text}`}
+          >
+            <span className="message-sender">{isOwn ? "You" : peerLabel}</span>
+            <p>{m.text}</p>
+          </article>
+        );
+      })}
+      <div ref={bottomRef} />
     </div>
   );
 }

@@ -4,9 +4,10 @@ import MessageList from "../components/MessageList";
 
 type Props = {
   relationshipId: string;
+  currentUserId: string;
 };
 
-export default function SupporterDashboard({ relationshipId }: Props) {
+export default function SupporterDashboard({ relationshipId, currentUserId }: Props) {
   const event = useLatestStruggle(relationshipId);
 
   return (
@@ -18,21 +19,29 @@ export default function SupporterDashboard({ relationshipId }: Props) {
         </div>
       </div>
 
-      {event ? (
+      {event && (
         <div className="alert-card">
           <div className="alert-card-header">
             <span className="alert-badge">Needs you now</span>
             <h4>They're struggling</h4>
-            <p>Choose a response below or write your own — then send it.</p>
+            <p>A high-priority signal was just sent — respond below.</p>
           </div>
-          <ResponseBox mood={event.mood} relationshipId={relationshipId} />
-        </div>
-      ) : (
-        <div className="card mentor-idle-card">
-          <p className="eyebrow">All quiet</p>
-          <p>You'll get an alert here the moment they need support.</p>
         </div>
       )}
+
+      <div className="card">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Send a message</p>
+            <h4>Reach out anytime</h4>
+          </div>
+        </div>
+        <ResponseBox
+          mood={event?.mood}
+          relationshipId={relationshipId}
+          senderId={currentUserId}
+        />
+      </div>
 
       <div className="card">
         <div className="section-heading">
@@ -42,7 +51,11 @@ export default function SupporterDashboard({ relationshipId }: Props) {
           </div>
         </div>
         <div className="chat-feed">
-          <MessageList relationshipId={relationshipId} />
+          <MessageList
+            currentUserId={currentUserId}
+            peerLabel="Them"
+            relationshipId={relationshipId}
+          />
         </div>
       </div>
     </section>

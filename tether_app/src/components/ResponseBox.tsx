@@ -6,10 +6,11 @@ import type { Mood } from "../types";
 
 type Props = {
   relationshipId: string;
+  senderId: string;
   mood?: Mood;
 };
 
-export default function ResponseBox({ relationshipId, mood }: Props) {
+export default function ResponseBox({ relationshipId, senderId, mood }: Props) {
   const suggestions = getResponseSuggestions(mood);
   const [text, setText] = useState("");
 
@@ -19,7 +20,7 @@ export default function ResponseBox({ relationshipId, mood }: Props) {
 
     await addDoc(collection(db, "messages"), {
       relationshipId,
-      senderId: "supporter",
+      senderId,
       text: trimmed,
       createdAt: serverTimestamp(),
     });

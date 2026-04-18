@@ -7,9 +7,10 @@ import { db } from "../services/firebase";
 
 type Props = {
   relationshipId: string;
+  currentUserId: string;
 };
 
-export default function DoerDashboard({ relationshipId }: Props) {
+export default function DoerDashboard({ relationshipId, currentUserId }: Props) {
   const [draft, setDraft] = useState("");
   const [showRoutine, setShowRoutine] = useState(false);
 
@@ -20,7 +21,7 @@ export default function DoerDashboard({ relationshipId }: Props) {
 
     await addDoc(collection(db, "messages"), {
       relationshipId,
-      senderId: "doer",
+      senderId: currentUserId,
       text: trimmedDraft,
       createdAt: serverTimestamp(),
     });
@@ -82,7 +83,11 @@ export default function DoerDashboard({ relationshipId }: Props) {
           </div>
 
           <div className="chat-feed">
-            <MessageList relationshipId={relationshipId} />
+            <MessageList
+              currentUserId={currentUserId}
+              peerLabel="Mentor"
+              relationshipId={relationshipId}
+            />
           </div>
         </section>
       </div>
