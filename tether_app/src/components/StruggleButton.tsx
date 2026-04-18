@@ -3,9 +3,10 @@ import { db } from "../services/firebase";
 
 type Props = {
   relationshipId: string;
+  onTrigger?: () => void;
 };
 
-export default function StruggleButton({ relationshipId }: Props) {
+export default function StruggleButton({ relationshipId, onTrigger }: Props) {
   const handleClick = async () => {
     await addDoc(collection(db, "events"), {
       relationshipId,
@@ -24,5 +25,9 @@ export default function StruggleButton({ relationshipId }: Props) {
     });
   };
 
-  return <button onClick={handleClick}>I'm Struggling</button>;
+  return (
+    <button className="struggle-button" onClick={handleClick} type="button">
+      I'm Struggling
+    </button>
+  );
 }

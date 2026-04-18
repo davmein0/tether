@@ -40,6 +40,12 @@ export interface InviteRecord extends Invite {
   id: string;
 }
 
+export interface RoutineStep {
+  id: string;
+  label: string;
+  detail: string;
+}
+
 export interface Event {
   relationshipId: string;
   type: "struggle" | "checkin";
