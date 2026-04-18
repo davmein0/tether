@@ -4,59 +4,11 @@ import MessageList from "../components/MessageList";
 import StruggleButton from "../components/StruggleButton";
 import { db } from "../services/firebase";
 
-const goals = [
-  {
-    title: "Reduce stress spirals",
-    target: "Use a reset tool 4 times this week",
-    progressLabel: "3 of 4 resets logged",
-    progressValue: 75,
-    status: "On track",
-  },
-  {
-    title: "Protect focus blocks",
-    target: "Keep two distraction-free sessions each day",
-    progressLabel: "8 of 10 blocks completed",
-    progressValue: 80,
-    status: "Strong streak",
-  },
-  {
-    title: "Ask for help earlier",
-    target: "Reach out before stress hits 8/10",
-    progressLabel: "2 check-ins started proactively",
-    progressValue: 55,
-    status: "Building momentum",
-  },
-] as const;
+type Props = {
+  relationshipId: string;
+};
 
-const timelineEntries = [
-  {
-    day: "Mon",
-    title: "Morning routine completed",
-    detail: "Started the day with a short walk and a focused planning block.",
-    tone: "win",
-  },
-  {
-    day: "Tue",
-    title: "Midday check-in",
-    detail: "Stress rose after lunch, but you paused before it snowballed.",
-    tone: "steady",
-  },
-  {
-    day: "Wed",
-    title: "Support request sent",
-    detail: "You flagged that work felt heavy and asked for encouragement in real time.",
-    tone: "support",
-  },
-  {
-    day: "Thu",
-    title: "Focus block recovered",
-    detail: "Restarted after a rough hour and still finished the most important task.",
-    tone: "win",
-  },
-] as const;
-
-export default function DoerDashboard() {
-  const relationshipId = "r1";
+export default function DoerDashboard({ relationshipId }: Props) {
   const [draft, setDraft] = useState("");
 
   const sendSupportMessage = async () => {
@@ -79,73 +31,17 @@ export default function DoerDashboard() {
       <div className="dashboard-hero">
         <div>
           <p className="eyebrow">Doer dashboard</p>
-          <h3>Keep your goals visible, your progress tangible, and support one tap away.</h3>
+          <h3>Use this space for live support while goals and timeline live on their own pages.</h3>
         </div>
 
         <div className="dashboard-highlight">
-          <span className="dashboard-highlight-label">Weekly pulse</span>
-          <strong>7 supportive touchpoints</strong>
-          <p>Small check-ins are turning into steadier routines.</p>
+          <span className="dashboard-highlight-label">Live support</span>
+          <strong>Reach out in real time</strong>
+          <p>Send a quick update or raise a high-priority struggle alert when you need backup.</p>
         </div>
       </div>
 
-      <div className="dashboard-grid">
-        <section className="card">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Goals</p>
-              <h4>What you are working toward</h4>
-            </div>
-            <span className="section-badge">3 active</span>
-          </div>
-
-          <div className="goal-list">
-            {goals.map((goal) => (
-              <article className="goal-card" key={goal.title}>
-                <div className="goal-card-header">
-                  <div>
-                    <h5>{goal.title}</h5>
-                    <p>{goal.target}</p>
-                  </div>
-                  <span className="goal-status">{goal.status}</span>
-                </div>
-
-                <div className="goal-progress">
-                  <div
-                    className="goal-progress-bar"
-                    style={{ width: `${goal.progressValue}%` }}
-                  />
-                </div>
-
-                <p className="goal-progress-label">{goal.progressLabel}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="card">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Progress timeline</p>
-              <h4>How this week has unfolded</h4>
-            </div>
-          </div>
-
-          <div className="timeline">
-            {timelineEntries.map((entry) => (
-              <article className="timeline-item" key={`${entry.day}-${entry.title}`}>
-                <div className={`timeline-marker timeline-marker-${entry.tone}`}>
-                  {entry.day}
-                </div>
-                <div className="timeline-content">
-                  <h5>{entry.title}</h5>
-                  <p>{entry.detail}</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
+      <div className="dashboard-grid dashboard-grid-single">
         <section className="card support-card">
           <div className="section-heading">
             <div>

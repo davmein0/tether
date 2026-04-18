@@ -2,8 +2,11 @@ import useLatestStruggle from "../hooks/useLatestStruggle";
 import ResponseBox from "../components/ResponseBox";
 import MessageList from "../components/MessageList";
 
-export default function SupporterDashboard() {
-  const relationshipId = "r1";
+type Props = {
+  relationshipId: string;
+};
+
+export default function SupporterDashboard({ relationshipId }: Props) {
   const event = useLatestStruggle(relationshipId);
 
   return (

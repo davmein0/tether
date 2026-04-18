@@ -22,11 +22,17 @@ export default function useLatestStruggle(relationshipId: string) {
       limit(1),
     );
 
-    const unsub = onSnapshot(q, (snapshot) => {
-      if (!snapshot.empty) {
-        setEvent(snapshot.docs[0].data() as Event);
-      }
-    });
+    const unsub = onSnapshot(
+      q,
+      (snapshot) => {
+        if (!snapshot.empty) {
+          setEvent(snapshot.docs[0].data() as Event);
+        }
+      },
+      (error) => {
+        console.error("latestStruggle listener error:", error);
+      },
+    );
 
     return unsub;
   }, [relationshipId]);
