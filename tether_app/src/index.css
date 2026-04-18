@@ -390,6 +390,247 @@ img {
   max-width: 100%;
 }
 
+/* ── Struggle button ── */
+.struggle-button {
+  background: linear-gradient(135deg, #c2410c, #7c2d12);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Temptation routine panel ── */
+.routine-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid rgba(180, 83, 9, 0.25);
+  border-radius: 22px;
+  background: linear-gradient(160deg, #fff8ee, #fdefd8);
+}
+
+.routine-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+}
+
+.routine-header h5 {
+  font: 600 1.05rem/1.2 var(--ui);
+  color: var(--text-strong);
+}
+
+.routine-dismiss {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(109, 83, 56, 0.1);
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.routine-progress-track {
+  overflow: hidden;
+  height: 8px;
+  border-radius: 999px;
+  background: #eed9c1;
+}
+
+.routine-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #d97706, #f59e0b);
+  transition: width 300ms ease;
+}
+
+.routine-progress-label {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-top: -6px;
+}
+
+.routine-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.routine-step {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: #fffdf9;
+  transition: opacity 200ms ease;
+}
+
+.routine-step-done {
+  opacity: 0.55;
+}
+
+.routine-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid rgba(180, 83, 9, 0.35);
+  background: transparent;
+  color: var(--success);
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 0;
+  transition: background 180ms ease, border-color 180ms ease;
+}
+
+.routine-step-done .routine-check {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+
+.routine-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.routine-step-label {
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.routine-step-detail {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.routine-complete {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 18px;
+  background: linear-gradient(160deg, #e8f5ee, #d4eddd);
+  color: var(--success);
+}
+
+.routine-complete strong {
+  font-size: 1.05rem;
+}
+
+.routine-complete p {
+  color: var(--success);
+  opacity: 0.85;
+}
+
+.routine-complete .primary-button {
+  align-self: flex-start;
+  margin-top: 4px;
+  background: linear-gradient(135deg, #3f7b54, #2d6b42);
+}
+
+/* ── Mentor / Supporter dashboard ── */
+.alert-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid rgba(180, 83, 9, 0.3);
+  border-radius: 24px;
+  background: linear-gradient(160deg, #fff8ee, #fdefd8);
+}
+
+.alert-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.alert-card-header h4 {
+  font: 600 1.45rem/1.1 var(--sans);
+  color: var(--text-strong);
+}
+
+.alert-card-header p {
+  color: var(--muted);
+}
+
+.alert-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #fee2b2;
+  color: #92400e;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.mentor-idle-card {
+  opacity: 0.72;
+}
+
+/* ── Response box with suggestion chips ── */
+.response-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.response-box-label {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text-strong);
+  letter-spacing: 0.04em;
+}
+
+.suggestion-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.suggestion-chip {
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(180, 83, 9, 0.3);
+  background: #fff9f1;
+  color: var(--accent-strong);
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: left;
+  line-height: 1.35;
+  white-space: normal;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
+}
+
+.suggestion-chip:hover {
+  background: #fef0d8;
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: none;
+}
+
+.suggestion-chip-active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
 @media (max-width: 1080px) {
   .app-layout,
   .dashboard-grid {

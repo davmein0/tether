@@ -2,6 +2,7 @@ import { useState } from "react";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import MessageList from "../components/MessageList";
 import StruggleButton from "../components/StruggleButton";
+import TemptationRoutine from "../components/TemptationRoutine";
 import { db } from "../services/firebase";
 
 const goals = [
@@ -58,6 +59,7 @@ const timelineEntries = [
 export default function DoerDashboard() {
   const relationshipId = "r1";
   const [draft, setDraft] = useState("");
+  const [showRoutine, setShowRoutine] = useState(false);
 
   const sendSupportMessage = async () => {
     const trimmedDraft = draft.trim();
@@ -152,8 +154,15 @@ export default function DoerDashboard() {
               <p className="eyebrow">Real-time support</p>
               <h4>Stay connected to your supporter</h4>
             </div>
-            <StruggleButton relationshipId={relationshipId} />
+            <StruggleButton
+              onTrigger={() => setShowRoutine(true)}
+              relationshipId={relationshipId}
+            />
           </div>
+
+          {showRoutine && (
+            <TemptationRoutine onDismiss={() => setShowRoutine(false)} />
+          )}
 
           <div className="support-composer">
             <label className="support-label" htmlFor="support-message">
