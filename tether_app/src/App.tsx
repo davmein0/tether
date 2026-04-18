@@ -253,25 +253,17 @@ export default function App() {
                 </section>
               )}
 
-              <section className="dashboard-panel dashboard-panel-supporter">
-                <div className="section-heading">
-                  <div>
-                    <p className="eyebrow">Supporter dashboard</p>
-                    <h4>Respond with context and encouragement</h4>
-                  </div>
-                </div>
-                {relationship && firebaseUser ? (
-                  <SupporterDashboard
-                    currentUserId={firebaseUser.uid}
-                    relationshipId={relationship.id}
-                  />
-                ) : (
-                  <p className="empty-state">
-                    The supporter view will come alive after the relationship is
-                    connected.
-                  </p>
-                )}
-              </section>
+              {relationship && firebaseUser ? (
+                <SupporterDashboard
+                  currentUserId={firebaseUser.uid}
+                  relationshipId={relationship.id}
+                />
+              ) : (
+                <section className="dashboard-panel auth-state-panel">
+                  <p className="eyebrow">Connect first</p>
+                  <h3>The mentor view will come alive after the relationship is connected.</h3>
+                </section>
+              )}
             </div>
           )}
         </>
