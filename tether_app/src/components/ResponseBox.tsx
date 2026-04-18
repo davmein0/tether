@@ -18,6 +18,11 @@ export default function ResponseBox({ relationshipId, senderId, mood }: Props) {
     const trimmed = text.trim();
     if (!trimmed) return;
 
+    console.log("Sending message:", {
+      relationshipId,
+      senderId,
+      text: trimmed,
+    });
     await addDoc(collection(db, "messages"), {
       relationshipId,
       senderId,

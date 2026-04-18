@@ -15,7 +15,11 @@ type Props = {
   peerLabel?: string;
 };
 
-export default function MessageList({ relationshipId, currentUserId, peerLabel = "Them" }: Props) {
+export default function MessageList({
+  relationshipId,
+  currentUserId,
+  peerLabel = "Them",
+}: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -23,11 +27,17 @@ export default function MessageList({ relationshipId, currentUserId, peerLabel =
     const q = query(
       collection(db, "messages"),
       where("relationshipId", "==", relationshipId),
-      orderBy("createdAt"),
     );
 
     const unsub = onSnapshot(q, (snapshot) => {
-      setMessages(snapshot.docs.map((d) => d.data() as Message));
+      console.log("Messages snapshot:", snapshot.docs.length, "docs");
+      const msgs = snapshot.docs.map((d) => d.data() as Message);
+      msgs.sort((a, b) => {
+        const aTime = a.createdAt as any;
+        const bTime = b.createdAt as any;
+        return aTime - bTime;
+      });
+      setMessages(msgs);
     });
 
     return unsub;
