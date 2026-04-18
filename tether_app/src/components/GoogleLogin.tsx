@@ -1,25 +1,24 @@
-import { useState } from "react";
 import type { User } from "firebase/auth";
-import { signInWithGoogle } from "../auth";
 
-export default function Login() {
-  const [user, setUser] = useState<User | null>(null);
+type Props = {
+  isLoading?: boolean;
+  onSignIn: () => Promise<void> | void;
+  user?: User | null;
+};
 
-  const handleLogin = async () => {
-    const result = await signInWithGoogle();
-    if (result) setUser(result);
-  };
-
+export default function Login({ isLoading = false, onSignIn, user }: Props) {
   return (
-    <div>
-      <button onClick={handleLogin}>Sign in with Google</button>
+    <div className="login-panel">
+      <button onClick={onSignIn} type="button">
+        {isLoading ? "Signing in..." : user ? "Switch Google account" : "Sign in with Google"}
+      </button>
 
-      {user && (
-        <div>
-          <p>Welcome, {user.displayName}</p>
-          <img src={user.photoURL ?? ""} />
+      {user ? (
+        <div className="login-summary">
+          <p>Signed in as {user.displayName ?? user.email}</p>
+          {user.photoURL ? <img alt={user.displayName ?? "User"} src={user.photoURL} /> : null}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

@@ -14,7 +14,15 @@ export default function StruggleButton({ relationshipId, onTrigger }: Props) {
       mood: "stress",
       createdAt: serverTimestamp(),
     });
-    onTrigger?.();
+
+    await addDoc(collection(db, "timelineEntries"), {
+      relationshipId,
+      type: "reachout",
+      title: "Reached out for support",
+      detail:
+        "The doer marked that they were struggling and asked for help in real time.",
+      createdAt: serverTimestamp(),
+    });
   };
 
   return (

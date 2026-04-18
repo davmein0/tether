@@ -2,25 +2,25 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
-// const requiredFirebaseEnvVars = [
-//   "VITE_FIREBASE_API_KEY",
-//   "VITE_FIREBASE_AUTH_DOMAIN",
-//   "VITE_FIREBASE_PROJECT_ID",
-//   "VITE_FIREBASE_STORAGE_BUCKET",
-//   "VITE_FIREBASE_MESSAGING_SENDER_ID",
-//   "VITE_FIREBASE_APP_ID",
-// ] as const;
+const requiredFirebaseEnvVars = [
+  "VITE_FIREBASE_API_KEY",
+  "VITE_FIREBASE_AUTH_DOMAIN",
+  "VITE_FIREBASE_PROJECT_ID",
+  "VITE_FIREBASE_STORAGE_BUCKET",
+  "VITE_FIREBASE_MESSAGING_SENDER_ID",
+  "VITE_FIREBASE_APP_ID",
+] as const;
 
-// const missingFirebaseEnvVars = requiredFirebaseEnvVars.filter(
-//   (envVar) => !import.meta.env[envVar],
-// );
+const missingFirebaseEnvVars = requiredFirebaseEnvVars.filter(
+  (envVar) => !import.meta.env[envVar],
+);
 
-// if (missingFirebaseEnvVars.length > 0) {
-//   throw new Error(
-//     `Missing Firebase environment variables: ${missingFirebaseEnvVars.join(", ")}. ` +
-//       "Create a .env.local file with your Firebase web app config.",
-//   );
-// }
+if (missingFirebaseEnvVars.length > 0) {
+  throw new Error(
+    `Missing Firebase environment variables: ${missingFirebaseEnvVars.join(", ")}. ` +
+      "Create a .env.local file with your Firebase web app config.",
+  );
+}
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -30,7 +30,7 @@ const firebaseConfig = {
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
-console.log(import.meta.env.VITE_FIREBASE_API_KEY);
+
 const app = initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);
