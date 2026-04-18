@@ -1,5 +1,22 @@
 # React + TypeScript + Vite
 
+## Firebase setup
+
+This app expects Firebase web config values through Vite environment variables.
+
+1. Copy `.env.example` to `.env.local`.
+2. Fill in the values from your Firebase project settings under `Project settings > General > Your apps > Web app`.
+3. Restart the Vite dev server after changing env values.
+
+Required variables:
+
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `VITE_FIREBASE_APP_ID`
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

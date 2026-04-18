@@ -5,12 +5,12 @@ export interface Event {
   type: "struggle" | "checkin";
   mood?: Mood;
   note?: string;
-  createdAt?: any;
+  createdAt?: unknown;
 }
 
 export interface Message {
   relationshipId: string;
   senderId: string;
   text: string;
-  createdAt?: any;
+  createdAt?: unknown;
 }

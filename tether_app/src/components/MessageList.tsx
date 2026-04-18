@@ -31,9 +31,19 @@ export default function MessageList({ relationshipId }: Props) {
   }, [relationshipId]);
 
   return (
-    <div>
+    <div className="message-list">
       {messages.map((m, i) => (
-        <p key={i}>{m.text}</p>
+        <article
+          className={`message-bubble ${
+            m.senderId === "supporter" ? "message-bubble-supporter" : "message-bubble-doer"
+          }`}
+          key={`${m.senderId}-${i}-${m.text}`}
+        >
+          <span className="message-sender">
+            {m.senderId === "supporter" ? "Supporter" : "You"}
+          </span>
+          <p>{m.text}</p>
+        </article>
       ))}
     </div>
   );

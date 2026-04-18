@@ -1,20 +1,32 @@
 import DoerDashboard from "./pages/DoerDashboard";
 import SupporterDashboard from "./pages/SupporterDashboard";
+import Login from "./components/GoogleLogin";
 
 export default function App() {
   return (
-    <div style={{ display: "flex", gap: "40px" }}>
-      {/* <div>"Hello World"</div> */}
-      <div>
-        <h2>Doer</h2>
-        <DoerDashboard />
-      </div>
+    <main className="app-shell">
+      <header className="app-header">
+        <div>
+          <p className="eyebrow">Tether</p>
+          <h1>Shared support for goals, routines, and hard moments.</h1>
+        </div>
+        <Login />
+      </header>
 
-      <div>
-        <h2>Supporter</h2>
-        <SupporterDashboard />
+      <div className="app-layout">
+        <DoerDashboard />
+
+        <section className="dashboard-panel dashboard-panel-supporter">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Supporter dashboard</p>
+              <h4>Respond with context and encouragement</h4>
+            </div>
+          </div>
+          <SupporterDashboard />
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
 // import { useState } from 'react'
