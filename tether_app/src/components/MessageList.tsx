@@ -50,18 +50,26 @@ export default function MessageList({
   }, [messages]);
 
   return (
-    <div className="chat-scroll">
-      <div className="message-list">
+    <div className="max-h-[420px] overflow-y-auto pr-1 [scrollbar-width:thin] [scrollbar-color:var(--color-panel-tint)_transparent]">
+      <div className="flex flex-col gap-3">
         {messages.map((m, i) => {
           const isOwn = m.senderId === currentUserId;
           return (
             <article
-              className={`message-bubble ${isOwn ? "message-bubble-doer" : "message-bubble-supporter"}`}
+              className={`max-w-[88%] flex flex-col gap-1 p-[14px_16px] rounded-[20px] border border-[rgba(109,83,56,0.16)] max-lg:max-w-full ${
+                isOwn
+                  ? "self-end bg-[#f4dfc7]"
+                  : "self-start bg-[#f2f6f2]"
+              }`}
               key={`${m.senderId}-${i}-${m.text}`}
             >
-              <span className="message-sender">{isOwn ? "You" : peerLabel}</span>
-              <p>{m.text}</p>
-              <span className="message-time">{formatTime(m.createdAt)}</span>
+              <span className="text-[0.78rem] font-bold tracking-[0.06em] uppercase text-[#8a7461]">
+                {isOwn ? "You" : peerLabel}
+              </span>
+              <p className="text-[#1f1711]">{m.text}</p>
+              <span className="mt-[2px] text-[0.72rem] text-[#8a7461] opacity-70">
+                {formatTime(m.createdAt)}
+              </span>
             </article>
           );
         })}

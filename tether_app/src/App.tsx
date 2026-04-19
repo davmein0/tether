@@ -129,21 +129,41 @@ export default function App() {
     setAuthStage("signed-out");
   };
 
+  /* shared class strings */
+  const panelBase =
+    "flex flex-col gap-5 p-6 border border-[rgba(109,83,56,0.16)] rounded-[28px] bg-[rgba(255,250,244,0.9)] [box-shadow:var(--shadow-panel)] backdrop-blur-[10px] max-sm:p-[18px] max-sm:rounded-[22px]";
+
+  const authStatePanel = `${panelBase} items-start min-h-[220px] justify-center`;
+
+  const navPillBase =
+    "border border-[rgba(109,83,56,0.16)] rounded-full px-[18px] py-3 font-bold text-[0.88rem] transition-transform duration-[140ms] hover:translate-y-[-1px] hover:[box-shadow:0_12px_24px_rgba(124,45,18,0.16)]";
+  const navPillInactive = `${navPillBase} bg-[rgba(255,249,241,0.8)] text-[#7c2d12] [box-shadow:none]`;
+  const navPillActive = `${navPillBase} bg-[linear-gradient(135deg,#b45309,#7c2d12)] text-[#fff9f1] border-transparent`;
+
+  const eyebrow =
+    "mb-[10px] text-[#7c2d12] text-[0.78rem] font-bold tracking-[0.18em] uppercase";
+
   return (
-    <main className="app-shell">
-      <header className="app-header">
+    <main className="w-[min(1380px,calc(100%-32px))] mx-auto py-8 pb-10 max-sm:py-5 max-sm:pb-6">
+      <header className="flex items-end justify-between gap-6 mb-7 max-lg:flex-col max-lg:items-stretch">
         <div>
-          <p className="eyebrow">Tether</p>
-          <h1>Shared support for goals, routines, and hard moments.</h1>
+          <p className={eyebrow}>Tether</p>
+          <h1 className="max-w-[720px] font-[600] text-[clamp(2.4rem,4vw,4.6rem)] leading-[0.95] [font-family:var(--font-sans)] text-[#1f1711] tracking-[-0.04em]">
+            Shared support for goals, routines, and hard moments.
+          </h1>
         </div>
-        <div className="app-header-actions">
+        <div className="flex items-center gap-3">
           <Login
             isLoading={isSigningIn}
             onSignIn={handleSignIn}
             user={firebaseUser}
           />
           {appUser ? (
-            <button className="nav-pill" onClick={handleSignOut} type="button">
+            <button
+              className={navPillInactive}
+              onClick={handleSignOut}
+              type="button"
+            >
               Sign out
             </button>
           ) : null}
@@ -151,14 +171,14 @@ export default function App() {
       </header>
 
       {authStage === "loading" ? (
-        <section className="dashboard-panel auth-state-panel">
-          <p className="eyebrow">Checking session</p>
-          <h3>Loading your workspace...</h3>
+        <section className={authStatePanel}>
+          <p className={eyebrow}>Checking session</p>
+          <h3 className="font-[600] text-[clamp(1.8rem,2.8vw,3rem)] leading-[1.02] [font-family:var(--font-sans)] text-[#1f1711]">Loading your workspace...</h3>
         </section>
       ) : authStage === "signed-out" ? (
-        <section className="dashboard-panel auth-state-panel">
-          <p className="eyebrow">Welcome</p>
-          <h3>
+        <section className={authStatePanel}>
+          <p className={eyebrow}>Welcome</p>
+          <h3 className="font-[600] text-[clamp(1.8rem,2.8vw,3rem)] leading-[1.02] [font-family:var(--font-sans)] text-[#1f1711]">
             Sign in with Google to create your profile and open the dashboard.
           </h3>
         </section>
@@ -173,38 +193,30 @@ export default function App() {
             />
           ) : null}
 
-          <nav className="top-nav" aria-label="Primary">
+          <nav className="flex gap-3 mb-5" aria-label="Primary">
             <button
-              className={
-                page === "dashboard" ? "nav-pill nav-pill-active" : "nav-pill"
-              }
+              className={page === "dashboard" ? navPillActive : navPillInactive}
               onClick={() => navigate("dashboard")}
               type="button"
             >
               Dashboard
             </button>
             <button
-              className={
-                page === "goals" ? "nav-pill nav-pill-active" : "nav-pill"
-              }
+              className={page === "goals" ? navPillActive : navPillInactive}
               onClick={() => navigate("goals")}
               type="button"
             >
               Goals
             </button>
             <button
-              className={
-                page === "timeline" ? "nav-pill nav-pill-active" : "nav-pill"
-              }
+              className={page === "timeline" ? navPillActive : navPillInactive}
               onClick={() => navigate("timeline")}
               type="button"
             >
               Timeline
             </button>
             <button
-              className={
-                page === "goal-log" ? "nav-pill nav-pill-active" : "nav-pill"
-              }
+              className={page === "goal-log" ? navPillActive : navPillInactive}
               onClick={() => navigate("goal-log")}
               type="button"
             >
@@ -216,40 +228,40 @@ export default function App() {
             relationship ? (
               <GoalLogPage relationshipId={relationship.id} />
             ) : (
-              <section className="dashboard-panel auth-state-panel">
-                <p className="eyebrow">Connect first</p>
-                <h3>Create or accept an invite before logging goals.</h3>
+              <section className={authStatePanel}>
+                <p className={eyebrow}>Connect first</p>
+                <h3 className="font-[600] text-[clamp(1.8rem,2.8vw,3rem)] leading-[1.02] [font-family:var(--font-sans)] text-[#1f1711]">Create or accept an invite before logging goals.</h3>
               </section>
             )
           ) : page === "goals" ? (
             relationship ? (
               <GoalsPage relationshipId={relationship.id} />
             ) : (
-              <section className="dashboard-panel auth-state-panel">
-                <p className="eyebrow">Connect first</p>
-                <h3>Create or accept an invite before viewing goals.</h3>
+              <section className={authStatePanel}>
+                <p className={eyebrow}>Connect first</p>
+                <h3 className="font-[600] text-[clamp(1.8rem,2.8vw,3rem)] leading-[1.02] [font-family:var(--font-sans)] text-[#1f1711]">Create or accept an invite before viewing goals.</h3>
               </section>
             )
           ) : page === "timeline" ? (
             relationship ? (
               <TimelinePage relationshipId={relationship.id} />
             ) : (
-              <section className="dashboard-panel auth-state-panel">
-                <p className="eyebrow">Connect first</p>
-                <h3>Create or accept an invite before using the timeline.</h3>
+              <section className={authStatePanel}>
+                <p className={eyebrow}>Connect first</p>
+                <h3 className="font-[600] text-[clamp(1.8rem,2.8vw,3rem)] leading-[1.02] [font-family:var(--font-sans)] text-[#1f1711]">Create or accept an invite before using the timeline.</h3>
               </section>
             )
           ) : (
-            <div className="app-layout">
+            <div className="grid grid-cols-[minmax(0,1.65fr)_minmax(320px,0.95fr)] gap-6 items-start max-lg:grid-cols-1">
               {relationship && firebaseUser ? (
                 <DoerDashboard
                   currentUserId={firebaseUser.uid}
                   relationshipId={relationship.id}
                 />
               ) : (
-                <section className="dashboard-panel auth-state-panel">
-                  <p className="eyebrow">Connect first</p>
-                  <h3>Create or accept an invite to open shared support.</h3>
+                <section className={authStatePanel}>
+                  <p className={eyebrow}>Connect first</p>
+                  <h3 className="font-[600] text-[clamp(1.8rem,2.8vw,3rem)] leading-[1.02] [font-family:var(--font-sans)] text-[#1f1711]">Create or accept an invite to open shared support.</h3>
                 </section>
               )}
 
@@ -259,9 +271,9 @@ export default function App() {
                   relationshipId={relationship.id}
                 />
               ) : (
-                <section className="dashboard-panel auth-state-panel">
-                  <p className="eyebrow">Connect first</p>
-                  <h3>The mentor view will come alive after the relationship is connected.</h3>
+                <section className={authStatePanel}>
+                  <p className={eyebrow}>Connect first</p>
+                  <h3 className="font-[600] text-[clamp(1.8rem,2.8vw,3rem)] leading-[1.02] [font-family:var(--font-sans)] text-[#1f1711]">The mentor view will come alive after the relationship is connected.</h3>
                 </section>
               )}
             </div>
@@ -270,23 +282,26 @@ export default function App() {
       )}
 
       {authStage === "needs-role" && firebaseUser ? (
-        <div className="modal-backdrop" role="presentation">
+        <div
+          className="fixed inset-0 flex items-center justify-center p-5 bg-[rgba(31,23,17,0.38)] backdrop-blur-[6px]"
+          role="presentation"
+        >
           <section
             aria-labelledby="role-modal-title"
             aria-modal="true"
-            className="modal-card"
+            className="w-[min(560px,100%)] flex flex-col gap-4 p-7 rounded-[28px] border border-[rgba(109,83,56,0.16)] bg-[rgba(255,249,241,0.98)] [box-shadow:var(--shadow-panel)]"
             role="dialog"
           >
-            <p className="eyebrow">Choose your role</p>
-            <h3 id="role-modal-title">What are you here for?</h3>
-            <p className="modal-copy">
+            <p className={eyebrow}>Choose your role</p>
+            <h3 id="role-modal-title" className="font-[600] text-[clamp(1.8rem,2.8vw,3rem)] leading-[1.02] [font-family:var(--font-sans)] text-[#1f1711]">What are you here for?</h3>
+            <p className="text-[#8a7461]">
               Note: If you are in immediate need of support, please seek
               professional help ASAP. This app is not supposed to replace real
               human connection or professional services.
             </p>
-            <div className="modal-actions">
+            <div className="flex gap-3 flex-wrap">
               <button
-                className="primary-button"
+                className="border-0 rounded-full px-[18px] py-3 bg-[linear-gradient(135deg,#b45309,#7c2d12)] text-[#fff9f1] font-bold transition-transform duration-[140ms] hover:translate-y-[-1px] hover:[box-shadow:0_12px_24px_rgba(124,45,18,0.16)] disabled:cursor-wait disabled:opacity-70 disabled:translate-y-0 disabled:[box-shadow:none]"
                 disabled={isSavingRole}
                 onClick={() => handleRoleSelection("doer")}
                 type="button"
@@ -294,7 +309,7 @@ export default function App() {
                 {isSavingRole ? "Saving..." : "I need help"}
               </button>
               <button
-                className="secondary-button"
+                className="border-0 rounded-full px-[18px] py-3 bg-[linear-gradient(135deg,#0f766e,#115e59)] text-[#fff9f1] font-bold transition-transform duration-[140ms] hover:translate-y-[-1px] hover:[box-shadow:0_12px_24px_rgba(124,45,18,0.16)] disabled:cursor-wait disabled:opacity-70 disabled:translate-y-0 disabled:[box-shadow:none]"
                 disabled={isSavingRole}
                 onClick={() => handleRoleSelection("supporter")}
                 type="button"
