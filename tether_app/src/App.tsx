@@ -238,32 +238,21 @@ export default function App() {
                 <h3 className="text-2xl font-bold text-stone-900 leading-snug [font-family:var(--font-serif)]">Create or accept an invite before using the timeline.</h3>
               </section>
             )
+          ) : relationship && firebaseUser && appUser?.role === "doer" ? (
+            <DoerDashboard
+              currentUserId={firebaseUser.uid}
+              relationshipId={relationship.id}
+            />
+          ) : relationship && firebaseUser && appUser?.role === "supporter" ? (
+            <SupporterDashboard
+              currentUserId={firebaseUser.uid}
+              relationshipId={relationship.id}
+            />
           ) : (
-            <div className="grid grid-cols-[minmax(0,1.6fr)_minmax(300px,0.9fr)] gap-6 items-start max-lg:grid-cols-1">
-              {relationship && firebaseUser ? (
-                <DoerDashboard
-                  currentUserId={firebaseUser.uid}
-                  relationshipId={relationship.id}
-                />
-              ) : (
-                <section className={authPanel}>
-                  <p className={eyebrow}>Connect first</p>
-                  <h3 className="text-2xl font-bold text-stone-900 leading-snug [font-family:var(--font-serif)]">Create or accept an invite to open shared support.</h3>
-                </section>
-              )}
-
-              {relationship && firebaseUser ? (
-                <SupporterDashboard
-                  currentUserId={firebaseUser.uid}
-                  relationshipId={relationship.id}
-                />
-              ) : (
-                <section className={authPanel}>
-                  <p className={eyebrow}>Connect first</p>
-                  <h3 className="text-2xl font-bold text-stone-900 leading-snug [font-family:var(--font-serif)]">The mentor view will come alive after the relationship is connected.</h3>
-                </section>
-              )}
-            </div>
+            <section className={authPanel}>
+              <p className={eyebrow}>Connect first</p>
+              <h3 className="text-2xl font-bold text-stone-900 leading-snug [font-family:var(--font-serif)]">Create or accept an invite to open your dashboard.</h3>
+            </section>
           )}
         </>
       )}
