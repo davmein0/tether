@@ -83,3 +83,11 @@ export interface TimelineEntry {
   metricLabel?: string;
   createdAt?: unknown;
 }
+
+export interface JournalEntry {
+  relationshipId: string;
+  userId: string;
+  text: string;
+  imageUrl?: string;
+  createdAt?: unknown;
+}

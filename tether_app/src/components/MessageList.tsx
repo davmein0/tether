@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Timestamp, collection, onSnapshot, query, where } from "firebase/firestore";
+import {
+  Timestamp,
+  collection,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore";
 import { db } from "../services/firebase";
 import type { Message } from "../types";
 
@@ -13,7 +19,10 @@ function formatTime(createdAt: unknown): string {
   if (!createdAt) return "";
   const date = (createdAt as Timestamp).toDate();
   const now = new Date();
-  const time = date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  const time = date.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
   if (date.toDateString() === now.toDateString()) return time;
   return `${date.toLocaleDateString([], { month: "short", day: "numeric" })} · ${time}`;
 }
@@ -59,7 +68,9 @@ export default function MessageList({
               className={`message-bubble ${isOwn ? "message-bubble-doer" : "message-bubble-supporter"}`}
               key={`${m.senderId}-${i}-${m.text}`}
             >
-              <span className="message-sender">{isOwn ? "You" : peerLabel}</span>
+              <span className="message-sender">
+                {isOwn ? "You" : peerLabel}
+              </span>
               <p>{m.text}</p>
               <span className="message-time">{formatTime(m.createdAt)}</span>
             </article>
