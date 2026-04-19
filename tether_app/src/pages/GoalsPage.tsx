@@ -48,18 +48,27 @@ export default function GoalsPage({ relationshipId }: Props) {
       return;
     }
 
-    await addDoc(collection(db, "goals"), {
-      relationshipId,
-      title: trimmedTitle,
-      description: trimmedDescription,
-      targetLabel: trimmedTarget,
-      startDate,
-      endDate,
-      status,
-      createdBy: auth.currentUser?.uid ?? "unknown",
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
+    await Promise.all([
+      addDoc(collection(db, "goals"), {
+        relationshipId,
+        title: trimmedTitle,
+        description: trimmedDescription,
+        targetLabel: trimmedTarget,
+        startDate,
+        endDate,
+        status,
+        createdBy: auth.currentUser?.uid ?? "unknown",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }),
+      addDoc(collection(db, "timelineEntries"), {
+        relationshipId,
+        type: "goal",
+        title: `Goal started: ${trimmedTitle}`,
+        detail: trimmedDescription,
+        createdAt: serverTimestamp(),
+      }),
+    ]);
 
     resetForm();
     setIsAddingGoal(false);

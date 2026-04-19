@@ -1,4 +1,5 @@
 import TimelineBoard from "../components/TimelineBoard";
+import WeeklyTimeline from "../components/WeeklyTimeline";
 
 type Props = {
   relationshipId: string;
@@ -8,23 +9,35 @@ const eyebrow = "text-[11px] font-semibold tracking-[0.15em] uppercase text-ambe
 
 export default function TimelinePage({ relationshipId }: Props) {
   return (
-    <section className="bg-white rounded-3xl border border-stone-200 shadow-sm flex flex-col gap-5 p-6">
-      <div className="flex justify-between gap-5 items-stretch">
+    <section className="bg-white rounded-3xl border border-stone-200 shadow-sm flex flex-col gap-6 p-6">
+      <div className="flex justify-between gap-5 items-start max-lg:flex-col">
         <div>
           <p className={eyebrow}>Timeline</p>
           <h3 className="text-2xl font-bold text-stone-900 leading-snug [font-family:var(--font-serif)]">
-            Track reachouts, meetings, and daily progress in one running view of support.
+            A week-by-week record of every goal, reachout, and check-in.
           </h3>
         </div>
-
-        <div className="min-w-[220px] p-4 rounded-2xl bg-amber-50 border border-amber-100 flex flex-col gap-2">
-          <span className={eyebrow}>Timeline types</span>
-          <strong className="text-stone-800 text-lg font-semibold">Reachouts, meetings, metrics</strong>
-          <p className="text-stone-600 text-sm leading-relaxed">Every key moment now gets its own place instead of being nested in the dashboard.</p>
+        <div className="flex gap-3 shrink-0 flex-wrap">
+          {[
+            { dot: "bg-emerald-500", label: "Goal started" },
+            { dot: "bg-teal-500", label: "Reachout" },
+            { dot: "bg-amber-500", label: "Meeting" },
+            { dot: "bg-stone-400", label: "Metric" },
+          ].map(({ dot, label }) => (
+            <span className="flex items-center gap-1.5 text-xs text-stone-500" key={label}>
+              <span className={`w-2 h-2 rounded-full ${dot}`} />
+              {label}
+            </span>
+          ))}
         </div>
       </div>
 
-      <TimelineBoard relationshipId={relationshipId} />
+      <WeeklyTimeline relationshipId={relationshipId} />
+
+      <div className="border-t border-stone-100 pt-5">
+        <p className={eyebrow + " mb-3"}>Log manually</p>
+        <TimelineBoard relationshipId={relationshipId} showHeader={false} />
+      </div>
     </section>
   );
 }

@@ -1,6 +1,6 @@
 export type UserRole = "doer" | "supporter";
 export type Mood = "stress" | "bored" | "habit" | "other";
-export type TimelineEntryType = "reachout" | "meeting" | "metric";
+export type TimelineEntryType = "reachout" | "meeting" | "metric" | "goal";
 
 export interface AppUser {
   displayName: string;
