@@ -21,12 +21,6 @@ function getEntryLabel(type: TimelineEntryType) {
   return "Metric";
 }
 
-function markerBg(tone: string) {
-  if (tone === "support") return "bg-[linear-gradient(180deg,#17867d,#0f766e)]";
-  if (tone === "steady") return "bg-[linear-gradient(180deg,#9a6b3c,#7c5230)]";
-  return "bg-[linear-gradient(180deg,#4d8b61,#3f7b54)]";
-}
-
 function formatTimelineDate(value: unknown) {
   if (
     typeof value === "object" &&
@@ -34,7 +28,7 @@ function formatTimelineDate(value: unknown) {
     "toDate" in value &&
     typeof value.toDate === "function"
   ) {
-    return (value as { toDate: () => Date }).toDate().toLocaleDateString(undefined, {
+    return value.toDate().toLocaleDateString(undefined, {
       month: "short",
       day: "numeric",
     });
@@ -42,6 +36,17 @@ function formatTimelineDate(value: unknown) {
 
   return "Now";
 }
+
+const markerBase = "inline-flex items-center justify-center min-h-[58px] w-[58px] rounded-2xl text-white font-bold text-xs text-center px-1";
+const markerTones: Record<string, string> = {
+  support: "bg-teal-700",
+  steady: "bg-amber-800",
+  win: "bg-emerald-700",
+};
+
+const eyebrow = "text-[11px] font-semibold tracking-[0.15em] uppercase text-amber-700 mb-1";
+const inputCls = "w-full bg-white border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400 resize-none";
+const secondaryBtn = "bg-white hover:bg-stone-50 text-stone-600 rounded-full px-4 py-2 text-sm font-medium border border-stone-200 transition-colors self-start";
 
 export default function TimelineBoard({ relationshipId, showHeader = true }: Props) {
   const [meetingSummary, setMeetingSummary] = useState("");
@@ -82,81 +87,65 @@ export default function TimelineBoard({ relationshipId, showHeader = true }: Pro
     });
   };
 
-  const eyebrow =
-    "mb-[10px] text-[#7c2d12] text-[0.78rem] font-bold tracking-[0.18em] uppercase";
-
-  const secondaryButton =
-    "border-0 rounded-full px-[18px] py-3 bg-[linear-gradient(135deg,#0f766e,#115e59)] text-[#fff9f1] font-bold transition-transform duration-[140ms] hover:translate-y-[-1px] hover:[box-shadow:0_12px_24px_rgba(124,45,18,0.16)]";
-
-  const inputCls =
-    "w-full min-h-[46px] p-[11px_14px] border border-[rgba(109,83,56,0.2)] rounded-[16px] bg-[#fffdfa] text-[#1f1711]";
-
   return (
-    <section className="flex flex-col gap-[18px] p-[22px] border border-[rgba(109,83,56,0.16)] rounded-[24px] bg-[#fff9f1] max-sm:p-[18px] max-sm:rounded-[22px]">
+    <section className="bg-stone-50 rounded-2xl border border-stone-100 flex flex-col gap-5 p-5">
       {showHeader ? (
-        <div className="flex justify-between items-start gap-4 max-lg:flex-col max-lg:items-stretch">
+        <div className="flex justify-between items-center gap-4 mb-4">
           <div>
             <p className={eyebrow}>Progress timeline</p>
-            <h4 className="font-[600] text-[1.55rem] leading-[1.05] [font-family:var(--font-sans)] text-[#1f1711]">How this week has unfolded</h4>
+            <h4 className="text-lg font-semibold text-stone-800">How this week has unfolded</h4>
           </div>
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-[14px]">
+      <div className="flex flex-col gap-3.5">
         {timelineEntries.length === 0 ? (
-          <p className="p-[18px] rounded-[18px] border border-dashed border-[rgba(109,83,56,0.24)] bg-[rgba(255,250,244,0.76)] text-[#8a7461]">
+          <p className="text-stone-400 text-xs p-4 rounded-xl border border-dashed border-stone-200 bg-white">
             Timeline activity will appear here once you log a reachout, meeting, or metric.
           </p>
         ) : (
-          timelineEntries.map((entry, index) => {
-            const tone = getEntryTone(entry.type);
-            return (
-              <article
-                className="grid grid-cols-[58px_minmax(0,1fr)] gap-[14px] items-start"
-                key={`${entry.title}-${index}`}
-              >
-                <div
-                  className={`inline-flex items-center justify-center min-h-[58px] rounded-[18px] text-white font-bold ${markerBg(tone)}`}
-                >
-                  {getEntryLabel(entry.type)}
+          timelineEntries.map((entry, index) => (
+            <article className="grid grid-cols-[58px_minmax(0,1fr)] gap-3.5 items-start" key={`${entry.title}-${index}`}>
+              <div className={`${markerBase} ${markerTones[getEntryTone(entry.type)] ?? "bg-stone-500"}`}>
+                {getEntryLabel(entry.type)}
+              </div>
+              <div className="bg-white border border-stone-100 rounded-2xl px-4 py-3.5">
+                <div className="flex flex-wrap gap-3 text-stone-400 text-xs font-semibold mb-2">
+                  <span>{formatTimelineDate(entry.createdAt)}</span>
+                  {entry.metricValue !== undefined && entry.metricLabel ? (
+                    <span>
+                      {entry.metricLabel}: {entry.metricValue}
+                    </span>
+                  ) : null}
                 </div>
-                <div className="p-[14px_16px] border border-[rgba(109,83,56,0.16)] rounded-[18px] bg-[#fffdf9]">
-                  <div className="flex flex-wrap gap-3 mb-[6px] text-[#8a7461] text-[0.84rem] font-bold">
-                    <span>{formatTimelineDate(entry.createdAt)}</span>
-                    {entry.metricValue !== undefined && entry.metricLabel ? (
-                      <span>
-                        {entry.metricLabel}: {entry.metricValue}
-                      </span>
-                    ) : null}
-                  </div>
-                  <h5 className="mb-1 text-[#1f1711] font-[600] text-[1.08rem] leading-[1.2] [font-family:var(--font-ui)]">{entry.title}</h5>
-                  <p className="text-[#8a7461]">{entry.detail}</p>
-                </div>
-              </article>
-            );
-          })
+                <h5 className="text-sm font-semibold text-stone-800 mb-1">{entry.title}</h5>
+                <p className="text-stone-600 text-sm leading-relaxed">{entry.detail}</p>
+              </div>
+            </article>
+          ))
         )}
       </div>
 
       <div className="grid grid-cols-2 gap-4 max-lg:grid-cols-1">
-        <div className="flex flex-col gap-[10px] p-4 rounded-[18px] border border-[rgba(109,83,56,0.16)] bg-[#fffcf8]">
-          <label className="text-[0.92rem] font-bold text-[#1f1711]" htmlFor="meeting-summary">
+        <div className="flex flex-col gap-3 bg-white border border-stone-100 rounded-2xl p-4">
+          <label className="text-sm font-semibold text-stone-800" htmlFor="meeting-summary">
             Log a meeting
           </label>
           <textarea
             id="meeting-summary"
-            className="w-full min-h-[110px] resize-y p-[14px_16px] border border-[rgba(109,83,56,0.2)] rounded-[18px] bg-[#fffdfa] text-[#1f1711]"
+            className={inputCls}
             onChange={(event) => setMeetingSummary(event.target.value)}
             placeholder="Capture what came out of a check-in or support meeting..."
+            rows={3}
             value={meetingSummary}
           />
-          <button className={secondaryButton} onClick={logMeeting} type="button">
+          <button className={secondaryBtn} onClick={logMeeting} type="button">
             Save meeting
           </button>
         </div>
 
-        <div className="flex flex-col gap-[10px] p-4 rounded-[18px] border border-[rgba(109,83,56,0.16)] bg-[#fffcf8]">
-          <label className="text-[0.92rem] font-bold text-[#1f1711]" htmlFor="metric-name">
+        <div className="flex flex-col gap-3 bg-white border border-stone-100 rounded-2xl p-4">
+          <label className="text-sm font-semibold text-stone-800" htmlFor="metric-name">
             Log a daily metric
           </label>
           <input
@@ -174,7 +163,7 @@ export default function TimelineBoard({ relationshipId, showHeader = true }: Pro
             type="number"
             value={metricValue}
           />
-          <button className={secondaryButton} onClick={logMetric} type="button">
+          <button className={secondaryBtn} onClick={logMetric} type="button">
             Save metric
           </button>
         </div>

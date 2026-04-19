@@ -10,7 +10,7 @@ export default function Login({ isLoading = false, onSignIn, user }: Props) {
   return (
     <div className="flex flex-col gap-2 items-end">
       <button
-        className="border-0 rounded-full px-[18px] py-3 bg-[linear-gradient(135deg,#b45309,#7c2d12)] text-[#fff9f1] font-bold transition-transform duration-[140ms] hover:translate-y-[-1px] hover:[box-shadow:0_12px_24px_rgba(124,45,18,0.16)]"
+        className="bg-amber-700 hover:bg-amber-800 text-white rounded-full px-5 py-2.5 text-sm font-semibold transition-colors border-0"
         onClick={onSignIn}
         type="button"
       >
@@ -18,7 +18,7 @@ export default function Login({ isLoading = false, onSignIn, user }: Props) {
       </button>
 
       {user ? (
-        <div className="flex items-center gap-[10px] text-[#8a7461] text-[0.92rem]">
+        <div className="flex items-center gap-2.5 text-stone-600 text-sm">
           <p>Signed in as {user.displayName ?? user.email}</p>
           {user.photoURL ? (
             <img

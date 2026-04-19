@@ -29,7 +29,7 @@ export default function StruggleButton({ relationshipId, onTrigger }: Props) {
 
   return (
     <button
-      className="border-0 rounded-full px-[18px] py-3 bg-[linear-gradient(135deg,#c2410c,#7c2d12)] text-[#fff9f1] font-bold whitespace-nowrap flex-shrink-0 transition-transform duration-[140ms] hover:translate-y-[-1px] hover:[box-shadow:0_12px_24px_rgba(124,45,18,0.16)]"
+      className="bg-red-500 hover:bg-red-600 text-white rounded-full px-5 py-2.5 text-sm font-semibold transition-colors border-0 whitespace-nowrap shrink-0"
       onClick={handleClick}
       type="button"
     >

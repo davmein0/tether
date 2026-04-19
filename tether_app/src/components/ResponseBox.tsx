@@ -35,15 +35,15 @@ export default function ResponseBox({ relationshipId, senderId, mood }: Props) {
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-[0.86rem] font-bold text-[#1f1711] tracking-[0.04em]">Quick responses</p>
+      <p className="text-sm font-semibold text-stone-800">Quick responses</p>
       <div className="flex flex-wrap gap-2">
         {suggestions.map((s) => (
           <button
-            className={`rounded-full border px-[14px] py-[9px] text-[0.88rem] font-semibold text-left leading-[1.35] whitespace-normal transition-transform duration-[140ms] hover:translate-y-[-1px] hover:bg-[#fef0d8] hover:border-[#b45309] ${
+            className={
               text === s
-                ? "bg-[#fff1de] border-[#b45309] text-[#7c2d12]"
-                : "bg-[#fff9f1] border-[rgba(180,83,9,0.3)] text-[#7c2d12]"
-            }`}
+                ? "text-xs font-medium px-3 py-2 rounded-lg border border-amber-400 bg-amber-50 text-amber-800 transition-colors text-left leading-snug"
+                : "text-xs font-medium px-3 py-2 rounded-lg border border-stone-200 bg-white text-stone-700 hover:border-amber-300 hover:bg-amber-50 transition-colors text-left leading-snug"
+            }
             key={s}
             onClick={() => setText(s)}
             type="button"
@@ -54,14 +54,15 @@ export default function ResponseBox({ relationshipId, senderId, mood }: Props) {
       </div>
 
       <textarea
-        className="w-full min-h-[110px] resize-y p-[14px_16px] border border-[rgba(109,83,56,0.2)] rounded-[18px] bg-[#fffdfa] text-[#1f1711]"
+        className="w-full bg-white border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400 resize-none"
         onChange={(e) => setText(e.target.value)}
         placeholder="Or write your own response..."
+        rows={3}
         value={text}
       />
 
       <button
-        className="border-0 rounded-full px-[18px] py-3 bg-[linear-gradient(135deg,#b45309,#7c2d12)] text-[#fff9f1] font-bold transition-transform duration-[140ms] hover:translate-y-[-1px] hover:[box-shadow:0_12px_24px_rgba(124,45,18,0.16)]"
+        className="bg-amber-700 hover:bg-amber-800 text-white rounded-full px-5 py-2.5 text-sm font-semibold transition-colors border-0 self-start"
         onClick={sendMessage}
         type="button"
       >

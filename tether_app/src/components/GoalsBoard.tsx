@@ -6,6 +6,8 @@ type Props = {
   showHeader?: boolean;
 };
 
+const eyebrow = "text-[11px] font-semibold tracking-[0.15em] uppercase text-amber-700 mb-1";
+
 export default function GoalsBoard({
   relationshipId,
   limit,
@@ -14,46 +16,43 @@ export default function GoalsBoard({
   const goals = useGoals(relationshipId);
   const visibleGoals = limit ? goals.slice(0, limit) : goals;
 
-  const eyebrow =
-    "mb-[10px] text-[#7c2d12] text-[0.78rem] font-bold tracking-[0.18em] uppercase";
-
   return (
-    <section className="flex flex-col gap-[18px] p-[22px] border border-[rgba(109,83,56,0.16)] rounded-[24px] bg-[#fff9f1] max-sm:p-[18px] max-sm:rounded-[22px]">
+    <section className="bg-stone-50 rounded-2xl border border-stone-100 flex flex-col gap-4 p-5">
       {showHeader ? (
-        <div className="flex justify-between items-start gap-4 max-lg:flex-col max-lg:items-stretch">
+        <div className="flex justify-between items-center gap-4 mb-4">
           <div>
             <p className={eyebrow}>Goals</p>
-            <h4 className="font-[600] text-[1.55rem] leading-[1.05] [font-family:var(--font-sans)] text-[#1f1711]">What you are working toward</h4>
+            <h4 className="text-lg font-semibold text-stone-800">What you are working toward</h4>
           </div>
-          <span className="inline-flex items-center justify-center px-3 py-[7px] rounded-full bg-[#fff1de] text-[#7c2d12] text-[0.86rem] font-bold">
+          <span className="bg-amber-50 text-amber-700 text-xs font-semibold px-3 py-1 rounded-full">
             {goals.length} active
           </span>
         </div>
       ) : null}
 
-      <div className="grid gap-[14px]">
+      <div className="flex flex-col gap-3">
         {goals.length === 0 ? (
-          <p className="p-[18px] rounded-[18px] border border-dashed border-[rgba(109,83,56,0.24)] bg-[rgba(255,250,244,0.76)] text-[#8a7461]">
+          <p className="text-stone-400 text-xs p-4 rounded-xl border border-dashed border-stone-200 bg-white">
             No goals logged yet. Use the goal page to add a dated goal.
           </p>
         ) : (
           visibleGoals.map((goal, index) => (
             <article
-              className="flex flex-col gap-3 p-[18px] border border-[rgba(109,83,56,0.16)] rounded-[20px] bg-[linear-gradient(180deg,#fffdfa,#fcf2e7)]"
+              className="bg-white rounded-xl border border-stone-100 flex flex-col gap-3 p-4"
               key={`${goal.title}-${goal.targetLabel}-${index}`}
             >
-              <div className="flex justify-between gap-4 items-start max-lg:flex-col max-lg:items-stretch">
+              <div className="flex justify-between items-start gap-4">
                 <div>
-                  <h5 className="mb-1 text-[#1f1711] font-[600] text-[1.08rem] leading-[1.2] [font-family:var(--font-ui)]">{goal.title}</h5>
-                  <p className="text-[#8a7461]">{goal.description}</p>
+                  <h5 className="text-sm font-semibold text-stone-800">{goal.title}</h5>
+                  <p className="text-stone-600 text-sm leading-relaxed">{goal.description}</p>
                 </div>
-                <span className="inline-flex items-center justify-center px-3 py-[7px] rounded-full bg-[#fff1de] text-[#7c2d12] text-[0.86rem] font-bold">
+                <span className="bg-stone-100 text-stone-600 text-xs font-semibold px-3 py-1 rounded-full shrink-0">
                   {goal.status}
                 </span>
               </div>
 
-              <p className="text-[0.94rem] font-[600]">{goal.targetLabel}</p>
-              <div className="flex flex-wrap gap-3 text-[#8a7461] text-[0.84rem] font-bold">
+              <p className="text-sm font-semibold text-stone-800">{goal.targetLabel}</p>
+              <div className="flex flex-wrap gap-3 text-stone-400 text-xs font-semibold">
                 <span>Start: {goal.startDate}</span>
                 <span>End: {goal.endDate}</span>
               </div>

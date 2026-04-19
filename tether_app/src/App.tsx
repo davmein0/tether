@@ -23,6 +23,11 @@ function getPageFromHash(): AppPage {
   return "dashboard";
 }
 
+const eyebrow = "text-[11px] font-semibold tracking-[0.15em] uppercase text-amber-700 mb-1";
+const navSecondary = "bg-white hover:bg-stone-50 text-stone-600 rounded-full px-4 py-2 text-sm font-medium border border-stone-200 transition-colors";
+const navActive = "bg-stone-900 text-white rounded-full px-4 py-2 text-sm font-medium border-0 transition-colors";
+const authPanel = "bg-white rounded-3xl border border-stone-200 shadow-sm flex flex-col gap-5 p-6 min-h-[220px] justify-center";
+
 export default function App() {
   const [page, setPage] = useState<AppPage>(getPageFromHash);
   const [authStage, setAuthStage] = useState<AuthStage>("loading");
@@ -129,26 +134,12 @@ export default function App() {
     setAuthStage("signed-out");
   };
 
-  /* shared class strings */
-  const panelBase =
-    "flex flex-col gap-5 p-6 border border-[rgba(109,83,56,0.16)] rounded-[28px] bg-[rgba(255,250,244,0.9)] [box-shadow:var(--shadow-panel)] backdrop-blur-[10px] max-sm:p-[18px] max-sm:rounded-[22px]";
-
-  const authStatePanel = `${panelBase} items-start min-h-[220px] justify-center`;
-
-  const navPillBase =
-    "border border-[rgba(109,83,56,0.16)] rounded-full px-[18px] py-3 font-bold text-[0.88rem] transition-transform duration-[140ms] hover:translate-y-[-1px] hover:[box-shadow:0_12px_24px_rgba(124,45,18,0.16)]";
-  const navPillInactive = `${navPillBase} bg-[rgba(255,249,241,0.8)] text-[#7c2d12] [box-shadow:none]`;
-  const navPillActive = `${navPillBase} bg-[linear-gradient(135deg,#b45309,#7c2d12)] text-[#fff9f1] border-transparent`;
-
-  const eyebrow =
-    "mb-[10px] text-[#7c2d12] text-[0.78rem] font-bold tracking-[0.18em] uppercase";
-
   return (
-    <main className="w-[min(1380px,calc(100%-32px))] mx-auto py-8 pb-10 max-sm:py-5 max-sm:pb-6">
-      <header className="flex items-end justify-between gap-6 mb-7 max-lg:flex-col max-lg:items-stretch">
+    <main className="max-w-[1380px] mx-auto px-4 py-8">
+      <header className="flex items-end justify-between gap-6 mb-8">
         <div>
           <p className={eyebrow}>Tether</p>
-          <h1 className="max-w-[720px] font-[600] text-[clamp(2.4rem,4vw,4.6rem)] leading-[0.95] [font-family:var(--font-sans)] text-[#1f1711] tracking-[-0.04em]">
+          <h1 className="text-5xl font-bold text-stone-900 leading-none tracking-tight [font-family:var(--font-serif)]">
             Shared support for goals, routines, and hard moments.
           </h1>
         </div>
@@ -159,11 +150,7 @@ export default function App() {
             user={firebaseUser}
           />
           {appUser ? (
-            <button
-              className={navPillInactive}
-              onClick={handleSignOut}
-              type="button"
-            >
+            <button className={navSecondary} onClick={handleSignOut} type="button">
               Sign out
             </button>
           ) : null}
@@ -171,14 +158,14 @@ export default function App() {
       </header>
 
       {authStage === "loading" ? (
-        <section className={authStatePanel}>
+        <section className={authPanel}>
           <p className={eyebrow}>Checking session</p>
-          <h3 className="font-[600] text-[clamp(1.8rem,2.8vw,3rem)] leading-[1.02] [font-family:var(--font-sans)] text-[#1f1711]">Loading your workspace...</h3>
+          <h3 className="text-2xl font-bold text-stone-900 leading-snug [font-family:var(--font-serif)]">Loading your workspace...</h3>
         </section>
       ) : authStage === "signed-out" ? (
-        <section className={authStatePanel}>
+        <section className={authPanel}>
           <p className={eyebrow}>Welcome</p>
-          <h3 className="font-[600] text-[clamp(1.8rem,2.8vw,3rem)] leading-[1.02] [font-family:var(--font-sans)] text-[#1f1711]">
+          <h3 className="text-2xl font-bold text-stone-900 leading-snug [font-family:var(--font-serif)]">
             Sign in with Google to create your profile and open the dashboard.
           </h3>
         </section>
@@ -193,30 +180,30 @@ export default function App() {
             />
           ) : null}
 
-          <nav className="flex gap-3 mb-5" aria-label="Primary">
+          <nav className="flex gap-2 mb-6" aria-label="Primary">
             <button
-              className={page === "dashboard" ? navPillActive : navPillInactive}
+              className={page === "dashboard" ? navActive : navSecondary}
               onClick={() => navigate("dashboard")}
               type="button"
             >
               Dashboard
             </button>
             <button
-              className={page === "goals" ? navPillActive : navPillInactive}
+              className={page === "goals" ? navActive : navSecondary}
               onClick={() => navigate("goals")}
               type="button"
             >
               Goals
             </button>
             <button
-              className={page === "timeline" ? navPillActive : navPillInactive}
+              className={page === "timeline" ? navActive : navSecondary}
               onClick={() => navigate("timeline")}
               type="button"
             >
               Timeline
             </button>
             <button
-              className={page === "goal-log" ? navPillActive : navPillInactive}
+              className={page === "goal-log" ? navActive : navSecondary}
               onClick={() => navigate("goal-log")}
               type="button"
             >
@@ -228,40 +215,40 @@ export default function App() {
             relationship ? (
               <GoalLogPage relationshipId={relationship.id} />
             ) : (
-              <section className={authStatePanel}>
+              <section className={authPanel}>
                 <p className={eyebrow}>Connect first</p>
-                <h3 className="font-[600] text-[clamp(1.8rem,2.8vw,3rem)] leading-[1.02] [font-family:var(--font-sans)] text-[#1f1711]">Create or accept an invite before logging goals.</h3>
+                <h3 className="text-2xl font-bold text-stone-900 leading-snug [font-family:var(--font-serif)]">Create or accept an invite before logging goals.</h3>
               </section>
             )
           ) : page === "goals" ? (
             relationship ? (
               <GoalsPage relationshipId={relationship.id} />
             ) : (
-              <section className={authStatePanel}>
+              <section className={authPanel}>
                 <p className={eyebrow}>Connect first</p>
-                <h3 className="font-[600] text-[clamp(1.8rem,2.8vw,3rem)] leading-[1.02] [font-family:var(--font-sans)] text-[#1f1711]">Create or accept an invite before viewing goals.</h3>
+                <h3 className="text-2xl font-bold text-stone-900 leading-snug [font-family:var(--font-serif)]">Create or accept an invite before viewing goals.</h3>
               </section>
             )
           ) : page === "timeline" ? (
             relationship ? (
               <TimelinePage relationshipId={relationship.id} />
             ) : (
-              <section className={authStatePanel}>
+              <section className={authPanel}>
                 <p className={eyebrow}>Connect first</p>
-                <h3 className="font-[600] text-[clamp(1.8rem,2.8vw,3rem)] leading-[1.02] [font-family:var(--font-sans)] text-[#1f1711]">Create or accept an invite before using the timeline.</h3>
+                <h3 className="text-2xl font-bold text-stone-900 leading-snug [font-family:var(--font-serif)]">Create or accept an invite before using the timeline.</h3>
               </section>
             )
           ) : (
-            <div className="grid grid-cols-[minmax(0,1.65fr)_minmax(320px,0.95fr)] gap-6 items-start max-lg:grid-cols-1">
+            <div className="grid grid-cols-[minmax(0,1.6fr)_minmax(300px,0.9fr)] gap-6 items-start max-lg:grid-cols-1">
               {relationship && firebaseUser ? (
                 <DoerDashboard
                   currentUserId={firebaseUser.uid}
                   relationshipId={relationship.id}
                 />
               ) : (
-                <section className={authStatePanel}>
+                <section className={authPanel}>
                   <p className={eyebrow}>Connect first</p>
-                  <h3 className="font-[600] text-[clamp(1.8rem,2.8vw,3rem)] leading-[1.02] [font-family:var(--font-sans)] text-[#1f1711]">Create or accept an invite to open shared support.</h3>
+                  <h3 className="text-2xl font-bold text-stone-900 leading-snug [font-family:var(--font-serif)]">Create or accept an invite to open shared support.</h3>
                 </section>
               )}
 
@@ -271,9 +258,9 @@ export default function App() {
                   relationshipId={relationship.id}
                 />
               ) : (
-                <section className={authStatePanel}>
+                <section className={authPanel}>
                   <p className={eyebrow}>Connect first</p>
-                  <h3 className="font-[600] text-[clamp(1.8rem,2.8vw,3rem)] leading-[1.02] [font-family:var(--font-sans)] text-[#1f1711]">The mentor view will come alive after the relationship is connected.</h3>
+                  <h3 className="text-2xl font-bold text-stone-900 leading-snug [font-family:var(--font-serif)]">The mentor view will come alive after the relationship is connected.</h3>
                 </section>
               )}
             </div>
@@ -283,25 +270,25 @@ export default function App() {
 
       {authStage === "needs-role" && firebaseUser ? (
         <div
-          className="fixed inset-0 flex items-center justify-center p-5 bg-[rgba(31,23,17,0.38)] backdrop-blur-[6px]"
+          className="fixed inset-0 flex items-center justify-center p-5 bg-stone-900/40 backdrop-blur-sm"
           role="presentation"
         >
           <section
             aria-labelledby="role-modal-title"
             aria-modal="true"
-            className="w-[min(560px,100%)] flex flex-col gap-4 p-7 rounded-[28px] border border-[rgba(109,83,56,0.16)] bg-[rgba(255,249,241,0.98)] [box-shadow:var(--shadow-panel)]"
+            className="w-[min(560px,100%)] flex flex-col gap-4 p-7 rounded-3xl border border-stone-200 bg-white shadow-xl"
             role="dialog"
           >
             <p className={eyebrow}>Choose your role</p>
-            <h3 id="role-modal-title" className="font-[600] text-[clamp(1.8rem,2.8vw,3rem)] leading-[1.02] [font-family:var(--font-sans)] text-[#1f1711]">What are you here for?</h3>
-            <p className="text-[#8a7461]">
+            <h3 id="role-modal-title" className="text-2xl font-bold text-stone-900 leading-snug [font-family:var(--font-serif)]">What are you here for?</h3>
+            <p className="text-stone-600 text-sm leading-relaxed">
               Note: If you are in immediate need of support, please seek
               professional help ASAP. This app is not supposed to replace real
               human connection or professional services.
             </p>
             <div className="flex gap-3 flex-wrap">
               <button
-                className="border-0 rounded-full px-[18px] py-3 bg-[linear-gradient(135deg,#b45309,#7c2d12)] text-[#fff9f1] font-bold transition-transform duration-[140ms] hover:translate-y-[-1px] hover:[box-shadow:0_12px_24px_rgba(124,45,18,0.16)] disabled:cursor-wait disabled:opacity-70 disabled:translate-y-0 disabled:[box-shadow:none]"
+                className="bg-amber-700 hover:bg-amber-800 text-white rounded-full px-5 py-2.5 text-sm font-semibold transition-colors border-0"
                 disabled={isSavingRole}
                 onClick={() => handleRoleSelection("doer")}
                 type="button"
@@ -309,7 +296,7 @@ export default function App() {
                 {isSavingRole ? "Saving..." : "I need help"}
               </button>
               <button
-                className="border-0 rounded-full px-[18px] py-3 bg-[linear-gradient(135deg,#0f766e,#115e59)] text-[#fff9f1] font-bold transition-transform duration-[140ms] hover:translate-y-[-1px] hover:[box-shadow:0_12px_24px_rgba(124,45,18,0.16)] disabled:cursor-wait disabled:opacity-70 disabled:translate-y-0 disabled:[box-shadow:none]"
+                className="bg-white hover:bg-stone-50 text-stone-600 rounded-full px-4 py-2 text-sm font-medium border border-stone-200 transition-colors"
                 disabled={isSavingRole}
                 onClick={() => handleRoleSelection("supporter")}
                 type="button"
