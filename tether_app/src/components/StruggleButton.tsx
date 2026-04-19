@@ -23,10 +23,16 @@ export default function StruggleButton({ relationshipId, onTrigger }: Props) {
         "The doer marked that they were struggling and asked for help in real time.",
       createdAt: serverTimestamp(),
     });
+
+    onTrigger?.();
   };
 
   return (
-    <button className="struggle-button" onClick={handleClick} type="button">
+    <button
+      className="bg-red-500 hover:bg-red-600 text-white rounded-full px-5 py-2.5 text-sm font-semibold transition-colors border-0 whitespace-nowrap shrink-0"
+      onClick={handleClick}
+      type="button"
+    >
       I'm Struggling
     </button>
   );
