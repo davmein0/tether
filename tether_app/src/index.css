@@ -457,6 +457,14 @@ button:disabled {
   padding: 6px 0 0;
 }
 
+.chat-scroll {
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--panel-tint) transparent;
+}
+
 .message-list {
   display: flex;
   flex-direction: column;
@@ -492,6 +500,13 @@ button:disabled {
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+.message-time {
+  margin-top: 2px;
+  font-size: 0.72rem;
+  color: var(--muted);
+  opacity: 0.7;
 }
 
 .timeline-meta,

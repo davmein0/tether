@@ -1,12 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { Timestamp, collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../services/firebase";
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  onSnapshot,
-} from "firebase/firestore";
 import type { Message } from "../types";
 
 type Props = {
@@ -14,6 +8,15 @@ type Props = {
   currentUserId: string;
   peerLabel?: string;
 };
+
+function formatTime(createdAt: unknown): string {
+  if (!createdAt) return "";
+  const date = (createdAt as Timestamp).toDate();
+  const now = new Date();
+  const time = date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  if (date.toDateString() === now.toDateString()) return time;
+  return `${date.toLocaleDateString([], { month: "short", day: "numeric" })} · ${time}`;
+}
 
 export default function MessageList({
   relationshipId,
@@ -30,11 +33,10 @@ export default function MessageList({
     );
 
     const unsub = onSnapshot(q, (snapshot) => {
-      console.log("Messages snapshot:", snapshot.docs.length, "docs");
       const msgs = snapshot.docs.map((d) => d.data() as Message);
       msgs.sort((a, b) => {
-        const aTime = a.createdAt as any;
-        const bTime = b.createdAt as any;
+        const aTime = (a.createdAt as Timestamp)?.seconds ?? 0;
+        const bTime = (b.createdAt as Timestamp)?.seconds ?? 0;
         return aTime - bTime;
       });
       setMessages(msgs);
@@ -48,20 +50,23 @@ export default function MessageList({
   }, [messages]);
 
   return (
-    <div className="message-list">
-      {messages.map((m, i) => {
-        const isOwn = m.senderId === currentUserId;
-        return (
-          <article
-            className={`message-bubble ${isOwn ? "message-bubble-doer" : "message-bubble-supporter"}`}
-            key={`${m.senderId}-${i}-${m.text}`}
-          >
-            <span className="message-sender">{isOwn ? "You" : peerLabel}</span>
-            <p>{m.text}</p>
-          </article>
-        );
-      })}
-      <div ref={bottomRef} />
+    <div className="chat-scroll">
+      <div className="message-list">
+        {messages.map((m, i) => {
+          const isOwn = m.senderId === currentUserId;
+          return (
+            <article
+              className={`message-bubble ${isOwn ? "message-bubble-doer" : "message-bubble-supporter"}`}
+              key={`${m.senderId}-${i}-${m.text}`}
+            >
+              <span className="message-sender">{isOwn ? "You" : peerLabel}</span>
+              <p>{m.text}</p>
+              <span className="message-time">{formatTime(m.createdAt)}</span>
+            </article>
+          );
+        })}
+        <div ref={bottomRef} />
+      </div>
     </div>
   );
 }
