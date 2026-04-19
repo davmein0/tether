@@ -50,18 +50,38 @@ export default function MessageList({
   }, [messages]);
 
   return (
-    <div className="chat-scroll">
-      <div className="message-list">
+    <div className="max-h-[420px] overflow-y-auto pr-1 scrollbar-thin">
+      <div className="flex flex-col gap-3">
         {messages.map((m, i) => {
           const isOwn = m.senderId === currentUserId;
           return (
             <article
-              className={`message-bubble ${isOwn ? "message-bubble-doer" : "message-bubble-supporter"}`}
+              className={
+                isOwn
+                  ? "self-end bg-amber-700 text-white rounded-2xl rounded-br-sm px-4 py-3 max-w-[80%] flex flex-col gap-1"
+                  : "self-start bg-stone-100 text-stone-900 rounded-2xl rounded-bl-sm px-4 py-3 max-w-[80%] flex flex-col gap-1"
+              }
               key={`${m.senderId}-${i}-${m.text}`}
             >
-              <span className="message-sender">{isOwn ? "You" : peerLabel}</span>
-              <p>{m.text}</p>
-              <span className="message-time">{formatTime(m.createdAt)}</span>
+              <span
+                className={
+                  isOwn
+                    ? "text-[10px] font-semibold uppercase tracking-wider mb-1 text-white/50"
+                    : "text-[10px] font-semibold uppercase tracking-wider mb-1 text-stone-400"
+                }
+              >
+                {isOwn ? "You" : peerLabel}
+              </span>
+              <p className={isOwn ? "text-white text-sm" : "text-stone-900 text-sm"}>{m.text}</p>
+              <span
+                className={
+                  isOwn
+                    ? "text-[10px] mt-1 text-white/60"
+                    : "text-[10px] mt-1 text-stone-400"
+                }
+              >
+                {formatTime(m.createdAt)}
+              </span>
             </article>
           );
         })}

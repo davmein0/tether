@@ -14,6 +14,12 @@ type Props = {
   userRole: UserRole;
 };
 
+const eyebrow = "text-[11px] font-semibold tracking-[0.15em] uppercase text-amber-700 mb-1";
+const card = "bg-stone-50 rounded-2xl border border-stone-100 flex flex-col gap-3 p-5";
+const inputCls = "w-full bg-white border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400";
+const primaryBtn = "bg-amber-700 hover:bg-amber-800 text-white rounded-full px-5 py-2.5 text-sm font-semibold transition-colors border-0";
+const secondaryBtn = "bg-white hover:bg-stone-50 text-stone-600 rounded-full px-4 py-2 text-sm font-medium border border-stone-200 transition-colors";
+
 export default function ConnectionSimulator({
   currentRelationship,
   onRelationshipChange,
@@ -73,58 +79,61 @@ export default function ConnectionSimulator({
   };
 
   return (
-    <section className="dashboard-panel connection-panel">
-      <div className="section-heading">
+    <section className="bg-white rounded-3xl border border-stone-200 shadow-sm flex flex-col gap-5 p-6 mb-6">
+      <div className="flex justify-between items-center gap-4 mb-4">
         <div>
-          <p className="eyebrow">Relationship setup</p>
-          <h4>Connect a doer and supporter with a real Firestore invite</h4>
+          <p className={eyebrow}>Relationship setup</p>
+          <h4 className="text-lg font-semibold text-stone-800">Connect a doer and supporter with a real Firestore invite</h4>
         </div>
-        <span className="section-badge">{currentRelationship?.status ?? "idle"}</span>
+        <span className="bg-stone-100 text-stone-600 text-xs font-semibold px-3 py-1 rounded-full">
+          {currentRelationship?.status ?? "idle"}
+        </span>
       </div>
 
-      <div className="connection-grid">
-        <div className="card">
-          <p className="support-label">Create invite</p>
-          <p className="connection-copy">
+      <div className="grid grid-cols-2 gap-4 max-lg:grid-cols-1">
+        <div className={card}>
+          <p className="text-sm font-semibold text-stone-800">Create invite</p>
+          <p className="text-stone-600 text-sm leading-relaxed">
             Create a relationship and generate a code for the other role to claim.
           </p>
-          <button className="primary-button" disabled={isWorking} onClick={createInvite} type="button">
+          <button className={primaryBtn} disabled={isWorking} onClick={createInvite} type="button">
             {isWorking ? "Working..." : `Invite a ${userRole === "doer" ? "supporter" : "doer"}`}
           </button>
           {invite ? (
-            <div className="connection-code">
-              <span>Invite code</span>
-              <strong>{invite.code}</strong>
-              <span>Waiting for a {invite.targetRole}</span>
+            <div className="bg-amber-50 rounded-xl p-4 border border-amber-100 flex flex-col gap-1.5 mt-1">
+              <span className="text-stone-600 text-sm">Invite code</span>
+              <strong className="text-amber-700 text-xl tracking-widest">{invite.code}</strong>
+              <span className="text-stone-400 text-xs">Waiting for a {invite.targetRole}</span>
             </div>
           ) : null}
         </div>
 
-        <div className="card">
-          <p className="support-label">Enter invite</p>
-          <p className="connection-copy">
+        <div className={card}>
+          <p className="text-sm font-semibold text-stone-800">Enter invite</p>
+          <p className="text-stone-600 text-sm leading-relaxed">
             Join an existing relationship by entering the code created by the other person.
           </p>
           <input
+            className={inputCls}
             onChange={(event) => setJoinCode(event.target.value)}
             placeholder="Enter invite code"
             type="text"
             value={joinCode}
           />
-          <button className="secondary-button" disabled={isWorking} onClick={joinRelationship} type="button">
+          <button className={secondaryBtn} disabled={isWorking} onClick={joinRelationship} type="button">
             {isWorking ? "Working..." : "Join relationship"}
           </button>
         </div>
       </div>
 
-      <div className="card">
-        <p className="support-label">Connection state</p>
-        <div className="rating-row">
+      <div className={card}>
+        <p className="text-sm font-semibold text-stone-800">Connection state</p>
+        <div className="flex flex-wrap gap-3 text-stone-400 text-xs font-semibold">
           <span>Current role: {userRole}</span>
           <span>Relationship: {currentRelationship ? currentRelationship.id : "none yet"}</span>
           <span>Invite: {invite?.status ?? "none"}</span>
         </div>
-        {message ? <p className="connection-copy">{message}</p> : null}
+        {message ? <p className="text-stone-600 text-sm leading-relaxed">{message}</p> : null}
       </div>
     </section>
   );
