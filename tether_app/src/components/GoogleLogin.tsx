@@ -14,7 +14,11 @@ export default function Login({ isLoading = false, onSignIn, user }: Props) {
         onClick={onSignIn}
         type="button"
       >
-        {isLoading ? "Signing in..." : user ? "Switch Google account" : "Sign in with Google"}
+        {isLoading
+          ? "Signing in..."
+          : user
+            ? "Switch Google account"
+            : "Sign in with Google"}
       </button>
 
       {user ? (

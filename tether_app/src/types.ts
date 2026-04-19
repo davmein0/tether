@@ -91,3 +91,49 @@ export interface JournalEntry {
   imageUrl?: string;
   createdAt?: unknown;
 }
+
+export interface JournalComment {
+  entryId: string;
+  authorId: string;
+  authorName?: string;
+  text: string;
+  createdAt?: unknown;
+}
+
+export interface CustomStrategy {
+  relationshipId: string;
+  name: string;
+  description: string;
+  category:
+    | "coping"
+    | "motivation"
+    | "accountability"
+    | "celebration"
+    | "other";
+  createdBy: string;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+}
+
+export interface CustomStrategyRecord extends CustomStrategy {
+  id: string;
+}
+
+export interface GoalReview {
+  relationshipId: string;
+  goalId: string;
+  reviewedBy: string;
+  rating: number; // 1-5
+  whatWentWell: string;
+  whatDidntWork: string;
+  howToProgressForward: string;
+  workingStrategies: string[];
+  suggestedStrategies?: string[];
+  notes?: string;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+}
+
+export interface GoalReviewRecord extends GoalReview {
+  id: string;
+}

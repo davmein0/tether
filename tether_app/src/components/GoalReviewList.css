@@ -1,0 +1,117 @@
+.reviews-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-secondary, #666);
+  font-size: 14px;
+  background: var(--surface-alt, #f9f9f9);
+  border-radius: 12px;
+  border: 1px dashed var(--border, #ddd);
+}
+
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reviews-heading {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text, #333);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.review-card {
+  padding: 20px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e0e0e0);
+  border-radius: 12px;
+  transition: box-shadow 0.2s;
+
+  &:hover {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border, #e0e0e0);
+  gap: 12px;
+}
+
+.review-goal {
+  flex: 1;
+}
+
+.review-title {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text, #333);
+}
+
+.review-meta {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+}
+
+.review-rating {
+  font-size: 18px;
+  color: var(--accent, #007bff);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.review-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.review-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary, #666);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.section-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text, #333);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.strategy-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.strategy-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--accent, #007bff);
+  color: white;
+  border-radius: 16px;
+  text-transform: capitalize;
+}

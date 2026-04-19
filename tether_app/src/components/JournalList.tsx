@@ -1,12 +1,21 @@
 import { useEffect, useRef, useState } from "react";
-import { Timestamp, collection, onSnapshot, query, where } from "firebase/firestore";
+import {
+  Timestamp,
+  collection,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore";
 import { db } from "../services/firebase";
+import JournalComments from "./JournalComments";
 import type { JournalEntry } from "../types";
 import "./JournalList.css";
 
 type Props = {
   relationshipId: string;
   userId?: string;
+  currentUserId?: string;
+  peerLabel?: string;
 };
 
 function formatDate(createdAt: unknown): string {
@@ -21,18 +30,26 @@ function formatDate(createdAt: unknown): string {
   });
 }
 
-export default function JournalList({ relationshipId, userId }: Props) {
+export default function JournalList({
+  relationshipId,
+  userId,
+  currentUserId,
+  peerLabel = "Them",
+}: Props) {
   const [entries, setEntries] = useState<(JournalEntry & { id: string })[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let q = query(collection(db, "journalEntries"), where("relationshipId", "==", relationshipId));
+    let q = query(
+      collection(db, "journalEntries"),
+      where("relationshipId", "==", relationshipId),
+    );
 
     if (userId) {
       q = query(
         collection(db, "journalEntries"),
         where("relationshipId", "==", relationshipId),
-        where("userId", "==", userId)
+        where("userId", "==", userId),
       );
     }
 
@@ -61,7 +78,10 @@ export default function JournalList({ relationshipId, userId }: Props) {
   if (entries.length === 0) {
     return (
       <div className="journal-list-empty">
-        <p>No journal entries yet. Start writing to capture your thoughts and progress.</p>
+        <p>
+          No journal entries yet. Start writing to capture your thoughts and
+          progress.
+        </p>
       </div>
     );
   }
@@ -81,6 +101,14 @@ export default function JournalList({ relationshipId, userId }: Props) {
             )}
             {entry.text && <p className="entry-text">{entry.text}</p>}
           </div>
+          {currentUserId && (
+            <JournalComments
+              entryId={entry.id}
+              currentUserId={currentUserId}
+              peerLabel={peerLabel}
+              isOwnEntry={entry.userId === currentUserId}
+            />
+          )}
         </article>
       ))}
       <div ref={bottomRef} />
