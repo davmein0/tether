@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import ErrorBanner from "./ErrorBanner";
 import useTimelineEntries from "../hooks/useTimelineEntries";
 import { db } from "../services/firebase";
 import type { TimelineEntryType } from "../types";
@@ -52,21 +53,29 @@ export default function TimelineBoard({ relationshipId, showHeader = true }: Pro
   const [meetingSummary, setMeetingSummary] = useState("");
   const [metricName, setMetricName] = useState("Focus score");
   const [metricValue, setMetricValue] = useState("7");
-  const timelineEntries = useTimelineEntries(relationshipId);
+  const { items: timelineEntries, error } = useTimelineEntries(relationshipId);
+  const [writeError, setWriteError] = useState<string | null>(null);
 
   const logMeeting = async () => {
     const trimmedSummary = meetingSummary.trim();
 
     if (!trimmedSummary) return;
 
-    await addDoc(collection(db, "timelineEntries"), {
-      relationshipId,
-      type: "meeting",
-      title: "Support meeting",
-      detail: trimmedSummary,
-      createdAt: serverTimestamp(),
-    });
+    try {
+      await addDoc(collection(db, "timelineEntries"), {
+        relationshipId,
+        type: "meeting",
+        title: "Support meeting",
+        detail: trimmedSummary,
+        createdAt: serverTimestamp(),
+      });
+    } catch (caught) {
+      console.error("log meeting failed:", caught);
+      setWriteError("Couldn't save that meeting. Please try again.");
+      return;
+    }
 
+    setWriteError(null);
     setMeetingSummary("");
   };
 
@@ -76,15 +85,21 @@ export default function TimelineBoard({ relationshipId, showHeader = true }: Pro
 
     if (!trimmedMetricName || Number.isNaN(parsedMetricValue)) return;
 
-    await addDoc(collection(db, "timelineEntries"), {
-      relationshipId,
-      type: "metric",
-      title: trimmedMetricName,
-      detail: `Daily progress metric recorded at ${parsedMetricValue}.`,
-      metricLabel: trimmedMetricName,
-      metricValue: parsedMetricValue,
-      createdAt: serverTimestamp(),
-    });
+    try {
+      await addDoc(collection(db, "timelineEntries"), {
+        relationshipId,
+        type: "metric",
+        title: trimmedMetricName,
+        detail: `Daily progress metric recorded at ${parsedMetricValue}.`,
+        metricLabel: trimmedMetricName,
+        metricValue: parsedMetricValue,
+        createdAt: serverTimestamp(),
+      });
+      setWriteError(null);
+    } catch (caught) {
+      console.error("log metric failed:", caught);
+      setWriteError("Couldn't save that metric. Please try again.");
+    }
   };
 
   return (
@@ -98,14 +113,18 @@ export default function TimelineBoard({ relationshipId, showHeader = true }: Pro
         </div>
       ) : null}
 
+      {(error || writeError) && (
+        <ErrorBanner message={writeError ?? "Couldn't load the timeline."} />
+      )}
+
       <div className="flex flex-col gap-3.5">
         {timelineEntries.length === 0 ? (
           <p className="text-stone-400 text-xs p-4 rounded-xl border border-dashed border-stone-200 bg-white">
             Timeline activity will appear here once you log a reachout, meeting, or metric.
           </p>
         ) : (
-          timelineEntries.map((entry, index) => (
-            <article className="grid grid-cols-[58px_minmax(0,1fr)] gap-3.5 items-start" key={`${entry.title}-${index}`}>
+          timelineEntries.map((entry) => (
+            <article className="grid grid-cols-[58px_minmax(0,1fr)] gap-3.5 items-start" key={entry.id}>
               <div className={`${markerBase} ${markerTones[getEntryTone(entry.type)] ?? "bg-stone-500"}`}>
                 {getEntryLabel(entry.type)}
               </div>

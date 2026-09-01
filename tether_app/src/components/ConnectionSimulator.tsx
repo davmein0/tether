@@ -3,9 +3,11 @@ import type { UserRole } from "../types";
 import type { InviteRecord, RelationshipRecord } from "../types";
 import {
   acceptInvite,
+  cancelInvite,
   createInviteForUser,
   getPendingInviteForUser,
 } from "../services/relationships";
+import ErrorBanner from "./ErrorBanner";
 
 type Props = {
   currentRelationship: RelationshipRecord | null;
@@ -29,12 +31,17 @@ export default function ConnectionSimulator({
   const [invite, setInvite] = useState<InviteRecord | null>(null);
   const [joinCode, setJoinCode] = useState("");
   const [message, setMessage] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [isWorking, setIsWorking] = useState(false);
 
   useEffect(() => {
     const loadInvite = async () => {
-      const pendingInvite = await getPendingInviteForUser(userId);
-      setInvite(pendingInvite);
+      try {
+        setInvite(await getPendingInviteForUser(userId));
+      } catch (caught) {
+        console.error("load invite error:", caught);
+        setError("We couldn't load your pending invite.");
+      }
     };
 
     void loadInvite();
@@ -42,20 +49,44 @@ export default function ConnectionSimulator({
 
   const createInvite = async () => {
     if (currentRelationship) {
-      setMessage("You already have a relationship record. Use the existing invite or reset from Firestore.");
+      setError("You already have a relationship. Cancel the pending invite first.");
       return;
     }
 
     setIsWorking(true);
+    setError(null);
 
     try {
       const result = await createInviteForUser(userId, userRole);
       setInvite(result.invite);
       onRelationshipChange(result.relationship);
       setMessage(`Invite created. Share code ${result.invite.code} with your ${result.invite.targetRole}.`);
-    } catch (error) {
-      console.error("Create invite error:", error);
-      setMessage("We could not create the invite. Check Firestore rules and try again.");
+    } catch (caught) {
+      console.error("Create invite error:", caught);
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "We could not create the invite. Please try again.",
+      );
+    } finally {
+      setIsWorking(false);
+    }
+  };
+
+  const discardInvite = async () => {
+    if (!invite) return;
+
+    setIsWorking(true);
+    setError(null);
+
+    try {
+      await cancelInvite(invite.id, invite.relationshipId);
+      setInvite(null);
+      onRelationshipChange(null);
+      setMessage("Invite cancelled. You can create a new one.");
+    } catch (caught) {
+      console.error("Cancel invite error:", caught);
+      setError("We could not cancel that invite. Please try again.");
     } finally {
       setIsWorking(false);
     }
@@ -63,16 +94,17 @@ export default function ConnectionSimulator({
 
   const joinRelationship = async () => {
     setIsWorking(true);
+    setError(null);
 
     try {
-      const relationship = await acceptInvite(userId, userRole, joinCode.trim().toUpperCase());
+      const relationship = await acceptInvite(userId, userRole, joinCode);
       onRelationshipChange(relationship);
       setInvite(null);
       setJoinCode("");
-      setMessage("Relationship connected through Firestore.");
-    } catch (error) {
-      console.error("Accept invite error:", error);
-      setMessage(error instanceof Error ? error.message : "We could not accept that invite.");
+      setMessage("You are connected.");
+    } catch (caught) {
+      console.error("Accept invite error:", caught);
+      setError(caught instanceof Error ? caught.message : "We could not accept that invite.");
     } finally {
       setIsWorking(false);
     }
@@ -90,6 +122,8 @@ export default function ConnectionSimulator({
         </span>
       </div>
 
+      {error && <ErrorBanner message={error} />}
+
       <div className="grid grid-cols-2 gap-4 max-lg:grid-cols-1">
         <div className={card}>
           <p className="text-sm font-semibold text-stone-800">Create invite</p>
@@ -103,7 +137,18 @@ export default function ConnectionSimulator({
             <div className="bg-amber-50 rounded-xl p-4 border border-amber-100 flex flex-col gap-1.5 mt-1">
               <span className="text-stone-600 text-sm">Invite code</span>
               <strong className="text-amber-700 text-xl tracking-widest">{invite.code}</strong>
-              <span className="text-stone-400 text-xs">Waiting for a {invite.targetRole}</span>
+              <span className="text-stone-400 text-xs">
+                Waiting for a {invite.targetRole}. Expires{" "}
+                {invite.expiresAt.toDate().toLocaleDateString()}.
+              </span>
+              <button
+                className={`${secondaryBtn} self-start mt-1`}
+                disabled={isWorking}
+                onClick={discardInvite}
+                type="button"
+              >
+                Cancel invite
+              </button>
             </div>
           ) : null}
         </div>
@@ -115,8 +160,10 @@ export default function ConnectionSimulator({
           </p>
           <input
             className={inputCls}
-            onChange={(event) => setJoinCode(event.target.value)}
+            autoCapitalize="characters"
+            onChange={(event) => setJoinCode(event.target.value.toUpperCase())}
             placeholder="Enter invite code"
+            spellCheck={false}
             type="text"
             value={joinCode}
           />

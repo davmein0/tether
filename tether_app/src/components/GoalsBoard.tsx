@@ -1,4 +1,5 @@
 import useGoals from "../hooks/useGoals";
+import ErrorBanner from "./ErrorBanner";
 
 type Props = {
   relationshipId: string;
@@ -13,7 +14,7 @@ export default function GoalsBoard({
   limit,
   showHeader = true,
 }: Props) {
-  const goals = useGoals(relationshipId);
+  const { items: goals, error } = useGoals(relationshipId);
   const visibleGoals = limit ? goals.slice(0, limit) : goals;
 
   return (
@@ -30,16 +31,18 @@ export default function GoalsBoard({
         </div>
       ) : null}
 
+      {error && <ErrorBanner message="Couldn't load goals." />}
+
       <div className="flex flex-col gap-3">
         {goals.length === 0 ? (
           <p className="text-stone-400 text-xs p-4 rounded-xl border border-dashed border-stone-200 bg-white">
             No goals logged yet. Use the goal page to add a dated goal.
           </p>
         ) : (
-          visibleGoals.map((goal, index) => (
+          visibleGoals.map((goal) => (
             <article
               className="bg-white rounded-xl border border-stone-100 flex flex-col gap-3 p-4"
-              key={`${goal.title}-${goal.targetLabel}-${index}`}
+              key={goal.id}
             >
               <div className="flex justify-between items-start gap-4">
                 <div>

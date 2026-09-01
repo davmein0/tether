@@ -1,12 +1,9 @@
-import { useEffect, useRef, useState } from "react";
-import {
-  Timestamp,
-  collection,
-  onSnapshot,
-  query,
-  where,
-} from "firebase/firestore";
+import { useEffect, useRef } from "react";
+import { Timestamp, collection, query, where } from "firebase/firestore";
 import { db } from "../services/firebase";
+import { useFirestoreQuery } from "../hooks/useFirestoreQuery";
+import { toMillis } from "../lib/timestamps";
+import ErrorBanner from "./ErrorBanner";
 import type { Message } from "../types";
 
 type Props = {
@@ -32,36 +29,31 @@ export default function MessageList({
   currentUserId,
   peerLabel = "Them",
 }: Props) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { items, error } = useFirestoreQuery<Message>(
+    () =>
+      query(
+        collection(db, "messages"),
+        where("relationshipId", "==", relationshipId),
+      ),
+    [relationshipId],
+  );
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const q = query(
-      collection(db, "messages"),
-      where("relationshipId", "==", relationshipId),
-    );
-
-    const unsub = onSnapshot(q, (snapshot) => {
-      const msgs = snapshot.docs.map((d) => d.data() as Message);
-      msgs.sort((a, b) => {
-        const aTime = (a.createdAt as Timestamp)?.seconds ?? 0;
-        const bTime = (b.createdAt as Timestamp)?.seconds ?? 0;
-        return aTime - bTime;
-      });
-      setMessages(msgs);
-    });
-
-    return unsub;
-  }, [relationshipId]);
+  const messages = [...items].sort(
+    (a, b) => toMillis(a.createdAt) - toMillis(b.createdAt),
+  );
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages.length]);
 
   return (
     <div className="max-h-[420px] overflow-y-auto pr-1 scrollbar-thin">
       <div className="flex flex-col gap-3">
-        {messages.map((m, i) => {
+        {error && (
+          <ErrorBanner message="We couldn't load your messages. Check your connection and reload." />
+        )}
+        {messages.map((m) => {
           const isOwn = m.senderId === currentUserId;
           return (
             <article
@@ -70,7 +62,7 @@ export default function MessageList({
                   ? "self-end bg-amber-700 text-white rounded-2xl rounded-br-sm px-4 py-3 max-w-[80%] flex flex-col gap-1"
                   : "self-start bg-stone-100 text-stone-900 rounded-2xl rounded-bl-sm px-4 py-3 max-w-[80%] flex flex-col gap-1"
               }
-              key={`${m.senderId}-${i}-${m.text}`}
+              key={m.id}
             >
               <span
                 className={

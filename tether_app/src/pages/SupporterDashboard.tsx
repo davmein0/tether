@@ -28,8 +28,8 @@ const typeLabel: Record<string, string> = {
 };
 
 export default function SupporterDashboard({ relationshipId, currentUserId }: Props) {
-  const event = useLatestStruggle(relationshipId);
-  const entries = useTimelineEntries(relationshipId);
+  const { event } = useLatestStruggle(relationshipId);
+  const { items: entries } = useTimelineEntries(relationshipId);
   const recentEntries = entries.slice(0, 4);
 
   return (
@@ -78,12 +78,12 @@ export default function SupporterDashboard({ relationshipId, currentUserId }: Pr
             </p>
           ) : (
             <div className="flex flex-col gap-2">
-              {recentEntries.map((entry, i) => {
+              {recentEntries.map((entry) => {
                 const date = toDate(entry.createdAt);
                 return (
                   <div
                     className="flex gap-3 items-start bg-white border border-stone-100 rounded-xl px-4 py-3"
-                    key={i}
+                    key={entry.id}
                   >
                     <span
                       className={`shrink-0 text-[10px] font-semibold px-2 py-1 rounded-md mt-0.5 ${

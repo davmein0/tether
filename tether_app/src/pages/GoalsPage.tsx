@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import ErrorBanner from "../components/ErrorBanner";
 import GoalsBoard from "../components/GoalsBoard";
 import useGoals from "../hooks/useGoals";
 import { auth, db } from "../services/firebase";
@@ -12,7 +13,8 @@ const eyebrow = "text-[11px] font-semibold tracking-[0.15em] uppercase text-ambe
 const inputCls = "w-full bg-white border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400 resize-none";
 
 export default function GoalsPage({ relationshipId }: Props) {
-  const goals = useGoals(relationshipId);
+  const { items: goals } = useGoals(relationshipId);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [isAddingGoal, setIsAddingGoal] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -48,28 +50,35 @@ export default function GoalsPage({ relationshipId }: Props) {
       return;
     }
 
-    await Promise.all([
-      addDoc(collection(db, "goals"), {
-        relationshipId,
-        title: trimmedTitle,
-        description: trimmedDescription,
-        targetLabel: trimmedTarget,
-        startDate,
-        endDate,
-        status,
-        createdBy: auth.currentUser?.uid ?? "unknown",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      }),
-      addDoc(collection(db, "timelineEntries"), {
-        relationshipId,
-        type: "goal",
-        title: `Goal started: ${trimmedTitle}`,
-        detail: trimmedDescription,
-        createdAt: serverTimestamp(),
-      }),
-    ]);
+    try {
+      await Promise.all([
+        addDoc(collection(db, "goals"), {
+          relationshipId,
+          title: trimmedTitle,
+          description: trimmedDescription,
+          targetLabel: trimmedTarget,
+          startDate,
+          endDate,
+          status,
+          createdBy: auth.currentUser?.uid ?? "unknown",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        }),
+        addDoc(collection(db, "timelineEntries"), {
+          relationshipId,
+          type: "goal",
+          title: `Goal started: ${trimmedTitle}`,
+          detail: trimmedDescription,
+          createdAt: serverTimestamp(),
+        }),
+      ]);
+    } catch (caught) {
+      console.error("save goal failed:", caught);
+      setSaveError("Couldn't save that goal. Please try again.");
+      return;
+    }
 
+    setSaveError(null);
     resetForm();
     setIsAddingGoal(false);
   };
@@ -115,6 +124,8 @@ export default function GoalsPage({ relationshipId }: Props) {
             ? "You already have 5 goals in the list. Complete or pause one before adding another."
             : `You currently have ${goals.length} goal${goals.length === 1 ? "" : "s"} in the list.`}
         </p>
+
+        {saveError && <ErrorBanner message={saveError} />}
 
         {isAddingGoal ? (
           <div className="grid grid-cols-2 gap-4 max-lg:grid-cols-1">

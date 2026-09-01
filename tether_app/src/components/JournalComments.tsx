@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Timestamp,
   addDoc,
   collection,
-  onSnapshot,
   query,
   serverTimestamp,
-  where,
 } from "firebase/firestore";
 import { db } from "../services/firebase";
+import { useFirestoreQuery } from "../hooks/useFirestoreQuery";
+import { toMillis } from "../lib/timestamps";
+import ErrorBanner from "./ErrorBanner";
 import type { JournalComment } from "../types";
 import "./JournalComments.css";
 
@@ -43,42 +44,26 @@ export default function JournalComments({
   peerLabel,
   isOwnEntry,
 }: Props) {
-  const [comments, setComments] = useState<(JournalComment & { id: string })[]>(
-    [],
-  );
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const q = query(
-      collection(db, "journalEntries", entryId, "comments"),
-      where("entryId", "==", entryId),
-    );
+  const { items, error } = useFirestoreQuery<JournalComment>(
+    () => query(collection(db, "journalEntries", entryId, "comments")),
+    [entryId],
+  );
 
-    const unsub = onSnapshot(q, (snapshot) => {
-      const commentsList = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as (JournalComment & { id: string })[];
-
-      commentsList.sort((a, b) => {
-        const aTime = (a.createdAt as Timestamp)?.seconds ?? 0;
-        const bTime = (b.createdAt as Timestamp)?.seconds ?? 0;
-        return aTime - bTime; // Oldest first
-      });
-
-      setComments(commentsList);
-    });
-
-    return unsub;
-  }, [entryId]);
+  const comments = [...items].sort(
+    (a, b) => toMillis(a.createdAt) - toMillis(b.createdAt),
+  );
 
   const handleSubmitComment = async () => {
     const trimmed = newComment.trim();
     if (!trimmed) return;
 
     setIsSubmitting(true);
+    setCommentError(null);
 
     try {
       await addDoc(collection(db, "journalEntries", entryId, "comments"), {
@@ -89,9 +74,9 @@ export default function JournalComments({
       });
 
       setNewComment("");
-    } catch (error) {
-      console.error("Error adding comment:", error);
-      alert("Failed to add comment");
+    } catch (caught) {
+      console.error("Error adding comment:", caught);
+      setCommentError("Your comment didn't post. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -113,6 +98,9 @@ export default function JournalComments({
       {isExpanded && (
         <div className="journal-comments-section">
           <div className="comments-list">
+            {error && (
+              <ErrorBanner message="We couldn't load comments on this entry." />
+            )}
             {comments.length === 0 ? (
               <p className="no-comments">
                 {isOwnEntry
@@ -162,6 +150,7 @@ export default function JournalComments({
               >
                 {isSubmitting ? "Posting..." : "Post comment"}
               </button>
+              {commentError && <ErrorBanner message={commentError} />}
             </form>
           )}
         </div>

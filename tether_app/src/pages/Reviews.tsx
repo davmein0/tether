@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { useState } from "react";
+import { collection, query, where } from "firebase/firestore";
 import { db } from "../services/firebase";
+import { useFirestoreQuery } from "../hooks/useFirestoreQuery";
+import ErrorBanner from "../components/ErrorBanner";
 import GoalReviewForm from "../components/GoalReviewForm";
 import GoalReviewList from "../components/GoalReviewList";
 import ProgressAnalytics from "../components/ProgressAnalytics";
 import StrategyManager from "../components/StrategyManager";
-import type { Goal, GoalReviewRecord, CustomStrategyRecord } from "../types";
+import type { Goal, GoalReview, CustomStrategy } from "../types";
 import { toMillis } from "../lib/timestamps";
 
 type Props = {
@@ -22,69 +24,31 @@ export default function ReviewsPage({
   userRole,
 }: Props) {
   const [tab, setTab] = useState<Tab>("reviews");
-  const [goals, setGoals] = useState<(Goal & { id: string })[]>([]);
-  const [reviews, setReviews] = useState<GoalReviewRecord[]>([]);
-  const [strategies, setStrategies] = useState<CustomStrategyRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const goalsQuery = query(
-      collection(db, "goals"),
-      where("relationshipId", "==", relationshipId),
-    );
+  const relationshipScoped = (name: string) =>
+    query(collection(db, name), where("relationshipId", "==", relationshipId));
 
-    const goalsUnsub = onSnapshot(goalsQuery, (snapshot) => {
-      const goalsData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as (Goal & { id: string })[];
+  const goalsState = useFirestoreQuery<Goal>(
+    () => relationshipScoped("goals"),
+    [relationshipId],
+  );
+  const reviewsState = useFirestoreQuery<GoalReview>(
+    () => relationshipScoped("goalReviews"),
+    [relationshipId],
+  );
+  const strategiesState = useFirestoreQuery<CustomStrategy>(
+    () => relationshipScoped("customStrategies"),
+    [relationshipId],
+  );
 
-      const sortedGoals = goalsData.sort((a, b) => {
-        return toMillis(b.createdAt) - toMillis(a.createdAt);
-      });
-
-      setGoals(sortedGoals);
-    });
-
-    return goalsUnsub;
-  }, [relationshipId]);
-
-  useEffect(() => {
-    const reviewsQuery = query(
-      collection(db, "goalReviews"),
-      where("relationshipId", "==", relationshipId),
-    );
-
-    const reviewsUnsub = onSnapshot(reviewsQuery, (snapshot) => {
-      const reviewsData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as GoalReviewRecord[];
-
-      setReviews(reviewsData);
-      setIsLoading(false);
-    });
-
-    return reviewsUnsub;
-  }, [relationshipId]);
-
-  useEffect(() => {
-    const strategiesQuery = query(
-      collection(db, "customStrategies"),
-      where("relationshipId", "==", relationshipId),
-    );
-
-    const strategiesUnsub = onSnapshot(strategiesQuery, (snapshot) => {
-      const strategiesData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as CustomStrategyRecord[];
-
-      setStrategies(strategiesData);
-    });
-
-    return strategiesUnsub;
-  }, [relationshipId]);
+  const goals = [...goalsState.items].sort(
+    (a, b) => toMillis(b.createdAt) - toMillis(a.createdAt),
+  );
+  const reviews = reviewsState.items;
+  const strategies = strategiesState.items;
+  const isLoading = reviewsState.loading;
+  const loadError =
+    goalsState.error ?? reviewsState.error ?? strategiesState.error;
 
   const tabButtonClass = (isActive: boolean) =>
     `px-4 py-2 text-sm font-medium rounded-full transition-colors ${
@@ -128,6 +92,10 @@ export default function ReviewsPage({
           Analytics
         </button>
       </div>
+
+      {loadError && (
+        <ErrorBanner message="We couldn't load your reviews. Check your connection and reload." />
+      )}
 
       {isLoading ? (
         <p className="text-stone-500">Loading...</p>

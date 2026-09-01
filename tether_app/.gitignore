@@ -28,3 +28,7 @@ dist-ssr
 .env.local
 .env.*.local
 !.env.example
+
+# Firebase emulator
+firestore-debug.log
+ui-debug.log

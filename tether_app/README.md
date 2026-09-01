@@ -34,6 +34,7 @@ npm run build       # tsc -b && vite build
 npm run preview     # serve the production build
 npm run lint        # eslint
 npm run test        # vitest unit tests
+npm run test:rules  # security-rules tests against the Firestore emulator (needs a JDK 21+)
 ```
 
 ## How it fits together
@@ -50,7 +51,7 @@ Pages render per role — `pages/DoerDashboard.tsx` and `pages/SupporterDashboar
 | --- | --- |
 | `users/{uid}` | Display name, email, photo, and `role` (`doer` or `supporter`) |
 | `relationships` | The pair: `doerId`, `supporterId`, `status` (`pending` / `active`) |
-| `invites` | One-time invite codes with `code`, `createdBy`, `role`, `status` |
+| `invites` | One-time invite codes; the document id *is* the code, and it expires after 7 days |
 | `goals` | Goals owned by a relationship, with progress and target dates |
 | `timelineEntries` | Timeline events (`goal`, `reachout`, `meeting`, `metric`) |
 | `events` | Struggle-button signals, including the selected mood |
@@ -59,7 +60,25 @@ Pages render per role — `pages/DoerDashboard.tsx` and `pages/SupporterDashboar
 | `goalReviews` | Weekly reviews tied to a goal |
 | `customStrategies` | Strategies the pair added to the struggle routine |
 
-Compound queries (`where("relationshipId", ...)` plus `orderBy("createdAt", ...)`) require composite indexes in the Firebase console; the listener logs a console error with a creation link if one is missing.
+### Security rules and indexes
+
+Rules and indexes live at the repository root and are the only thing protecting this data — the Firebase web config in `.env.local` is public.
+
+| File | Purpose |
+| --- | --- |
+| `firestore.rules` | Every relationship-scoped collection is readable and writable only by the two accounts on that relationship |
+| `storage.rules` | Journal images, scoped the same way |
+| `firestore.indexes.json` | The composite indexes the app's queries need |
+
+Deploy them with:
+
+```bash
+firebase deploy --only firestore:rules,firestore:indexes,storage
+```
+
+An invite code is the invite document's id, so the rules can allow a direct `get` by code (knowing the code is the point) while refusing to list the collection — codes cannot be enumerated.
+
+`npm run test:rules` boots the Firestore emulator and asserts the rules from the perspective of a doer, a supporter, and a stranger; it needs no Firebase project or credentials.
 
 ## Deployment
 

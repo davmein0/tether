@@ -1,4 +1,7 @@
+import type { Timestamp } from "firebase/firestore";
+
 export type UserRole = "doer" | "supporter";
+export type WithId<T> = T & { id: string };
 export type Mood = "stress" | "bored" | "habit" | "other";
 export type TimelineEntryType = "reachout" | "meeting" | "metric" | "goal";
 
@@ -6,16 +9,18 @@ export interface AppUser {
   displayName: string;
   email: string;
   photoURL?: string;
-  role: UserRole | string;
+  role: UserRole;
   createdAt?: unknown;
   updatedAt?: unknown;
 }
+
+export type RelationshipStatus = "pending" | "active" | "ended";
 
 export interface Relationship {
   name: string;
   doerId: string | null;
   supporterId: string | null;
-  status: string;
+  status: RelationshipStatus;
   createdAt?: unknown;
   updatedAt?: unknown;
 }
@@ -24,14 +29,17 @@ export interface RelationshipRecord extends Relationship {
   id: string;
 }
 
+export type InviteStatus = "pending" | "accepted" | "cancelled";
+
 export interface Invite {
   relationshipId: string;
   createdBy: string;
   createdByRole: UserRole;
   targetRole: UserRole;
   code: string;
-  status: string;
+  status: InviteStatus;
   claimedBy: string | null;
+  expiresAt: Timestamp;
   createdAt?: unknown;
   updatedAt?: unknown;
 }
