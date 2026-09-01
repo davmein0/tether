@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import type { User } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 import ConnectionSimulator from "./components/ConnectionSimulator";
 import Login from "./components/GoogleLogin";
 import { getUserProfile, saveUserProfile, signInWithGoogle } from "./auth";
-import { db } from "./services/firebase";
 import DoerDashboard from "./pages/DoerDashboard";
 import GoalLogPage from "./pages/GoalLogPage";
 import GoalsPage from "./pages/GoalsPage";

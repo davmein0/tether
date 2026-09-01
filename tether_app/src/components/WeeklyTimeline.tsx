@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { Timestamp } from "firebase/firestore";
 import useTimelineEntries from "../hooks/useTimelineEntries";
+import { toDate } from "../lib/timestamps";
 import type { TimelineEntry } from "../types";
 
 type Props = { relationshipId: string };
@@ -18,14 +18,6 @@ function getMondayWeek(): Date[] {
     d.setDate(monday.getDate() + i);
     return d;
   });
-}
-
-function toDate(createdAt: unknown): Date | null {
-  if (!createdAt) return null;
-  if (typeof createdAt === "object" && createdAt !== null && "toDate" in createdAt) {
-    return (createdAt as Timestamp).toDate();
-  }
-  return null;
 }
 
 function isSameDay(a: Date, b: Date) {
@@ -62,21 +54,17 @@ export default function WeeklyTimeline({ relationshipId }: Props) {
   const weekDays = useMemo(() => getMondayWeek(), []);
   const today = new Date();
 
-  const weekEntries = useMemo(() => {
-    return entries
-      .map((e) => ({ date: toDate(e.createdAt), entry: e }))
-      .filter(({ date }) => date && weekDays.some((d) => isSameDay(d, date!)));
-  }, [entries, weekDays]);
-
   const byDayIndex = useMemo(() => {
     const map = new Map<number, { date: Date; entry: TimelineEntry }[]>();
     weekDays.forEach((_, i) => map.set(i, []));
-    weekEntries.forEach(({ date, entry }) => {
-      const idx = weekDays.findIndex((d) => isSameDay(d, date!));
-      if (idx !== -1) map.get(idx)!.push({ date: date!, entry });
+    entries.forEach((entry) => {
+      const date = toDate(entry.createdAt);
+      if (!date) return;
+      const idx = weekDays.findIndex((d) => isSameDay(d, date));
+      if (idx !== -1) map.get(idx)!.push({ date, entry });
     });
     return map;
-  }, [weekEntries, weekDays]);
+  }, [entries, weekDays]);
 
   const monthRange = (() => {
     const fmt = (d: Date) =>

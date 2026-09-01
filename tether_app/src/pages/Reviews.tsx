@@ -6,6 +6,7 @@ import GoalReviewList from "../components/GoalReviewList";
 import ProgressAnalytics from "../components/ProgressAnalytics";
 import StrategyManager from "../components/StrategyManager";
 import type { Goal, GoalReviewRecord, CustomStrategyRecord } from "../types";
+import { toMillis } from "../lib/timestamps";
 
 type Props = {
   relationshipId: string;
@@ -39,9 +40,7 @@ export default function ReviewsPage({
       })) as (Goal & { id: string })[];
 
       const sortedGoals = goalsData.sort((a, b) => {
-        const aTime = (a.createdAt as any)?.seconds ?? 0;
-        const bTime = (b.createdAt as any)?.seconds ?? 0;
-        return bTime - aTime;
+        return toMillis(b.createdAt) - toMillis(a.createdAt);
       });
 
       setGoals(sortedGoals);

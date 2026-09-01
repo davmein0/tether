@@ -2,7 +2,10 @@
   display: grid;
   grid-template-columns: 1fr 2fr;
   gap: 24px;
-  max-lg: {
+}
+
+@media (max-width: 1024px) {
+  .strategy-manager {
     grid-template-columns: 1fr;
   }
 }

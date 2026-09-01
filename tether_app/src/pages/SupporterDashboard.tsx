@@ -1,9 +1,9 @@
-import { Timestamp } from "firebase/firestore";
 import GoalsBoard from "../components/GoalsBoard";
 import MessageList from "../components/MessageList";
 import ResponseBox from "../components/ResponseBox";
 import useLatestStruggle from "../hooks/useLatestStruggle";
 import useTimelineEntries from "../hooks/useTimelineEntries";
+import { toDate } from "../lib/timestamps";
 
 type Props = {
   relationshipId: string;
@@ -26,14 +26,6 @@ const typeLabel: Record<string, string> = {
   meeting: "Meeting",
   metric: "Metric",
 };
-
-function toDate(createdAt: unknown): Date | null {
-  if (!createdAt) return null;
-  if (typeof createdAt === "object" && createdAt !== null && "toDate" in createdAt) {
-    return (createdAt as Timestamp).toDate();
-  }
-  return null;
-}
 
 export default function SupporterDashboard({ relationshipId, currentUserId }: Props) {
   const event = useLatestStruggle(relationshipId);
