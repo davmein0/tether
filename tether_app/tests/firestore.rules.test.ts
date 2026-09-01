@@ -14,6 +14,7 @@ import {
   getDocs,
   query,
   setDoc,
+  Timestamp,
   updateDoc,
   where,
 } from "firebase/firestore";
@@ -24,6 +25,11 @@ const SUPPORTER = "supporter-uid";
 const STRANGER = "stranger-uid";
 const RELATIONSHIP_ID = "relationship-1";
 const CODE = "ABCD2345";
+const OTHER_CODE = "WXYZ6789";
+
+function inMinutes(minutes: number) {
+  return Timestamp.fromMillis(Date.now() + minutes * 60_000);
+}
 
 let testEnv: RulesTestEnvironment;
 
@@ -93,6 +99,30 @@ describe("relationship-scoped collections", () => {
     );
   });
 
+  it.each(collections)("refuses to move %s to another pair", async (name) => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), name, "doc-1"), {
+        relationshipId: RELATIONSHIP_ID,
+      });
+    });
+
+    await assertFails(
+      updateDoc(doc(asDoer(), name, "doc-1"), {
+        relationshipId: "somewhere-else",
+      }),
+    );
+  });
+
+  it.each(collections)("lets a member delete from %s", async (name) => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), name, "doc-1"), {
+        relationshipId: RELATIONSHIP_ID,
+      });
+    });
+
+    await assertSucceeds(deleteDoc(doc(asDoer(), name, "doc-1")));
+  });
+
   it.each(collections)("keeps a stranger out of %s", async (name) => {
     const db = asStranger();
     await assertFails(
@@ -138,6 +168,37 @@ describe("journal entries", () => {
         entryId: "entry-1",
         authorId: DOER,
         text: "not mine to write",
+      }),
+    );
+  });
+
+  it("does not let a comment author hand the comment to someone else", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(
+        doc(context.firestore(), "journalEntries", "entry-1", "comments", "c1"),
+        { entryId: "entry-1", authorId: SUPPORTER, text: "thinking of you" },
+      );
+    });
+
+    const db = testEnv.authenticatedContext(SUPPORTER).firestore();
+    await assertSucceeds(
+      updateDoc(doc(db, "journalEntries", "entry-1", "comments", "c1"), {
+        text: "edited",
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(db, "journalEntries", "entry-1", "comments", "c1"), {
+        authorId: STRANGER,
+      }),
+    );
+  });
+
+  it("keeps a stranger out of the comments", async () => {
+    await assertFails(
+      addDoc(collection(asStranger(), "journalEntries", "entry-1", "comments"), {
+        entryId: "entry-1",
+        authorId: STRANGER,
+        text: "uninvited",
       }),
     );
   });
@@ -196,6 +257,18 @@ describe("invites", () => {
         code: CODE,
         status: "pending",
         claimedBy: null,
+        expiresAt: inMinutes(60),
+      });
+      // An unrelated invite the stranger also happens to hold.
+      await setDoc(doc(db, "invites", OTHER_CODE), {
+        relationshipId: "some-other-relationship",
+        createdBy: SUPPORTER,
+        createdByRole: "supporter",
+        targetRole: "doer",
+        code: OTHER_CODE,
+        status: "pending",
+        claimedBy: null,
+        expiresAt: inMinutes(60),
       });
     });
   });
@@ -211,6 +284,7 @@ describe("invites", () => {
       updateDoc(doc(db, "relationships", "relationship-open"), {
         supporterId: STRANGER,
         status: "active",
+        claimedWithCode: CODE,
       }),
     );
     await assertSucceeds(
@@ -231,6 +305,68 @@ describe("invites", () => {
       updateDoc(doc(asStranger(), "relationships", "relationship-open"), {
         doerId: STRANGER,
         supporterId: STRANGER,
+        claimedWithCode: CODE,
+      }),
+    );
+  });
+
+  it("refuses a claim that names no invite", async () => {
+    await assertFails(
+      updateDoc(doc(asStranger(), "relationships", "relationship-open"), {
+        supporterId: STRANGER,
+        status: "active",
+      }),
+    );
+  });
+
+  it("refuses a code belonging to a different relationship", async () => {
+    await assertFails(
+      updateDoc(doc(asStranger(), "relationships", "relationship-open"), {
+        supporterId: STRANGER,
+        status: "active",
+        claimedWithCode: OTHER_CODE,
+      }),
+    );
+  });
+
+  it("refuses an expired code", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), "invites", CODE), {
+        expiresAt: inMinutes(-1),
+      });
+    });
+
+    await assertFails(
+      updateDoc(doc(asStranger(), "relationships", "relationship-open"), {
+        supporterId: STRANGER,
+        status: "active",
+        claimedWithCode: CODE,
+      }),
+    );
+  });
+
+  it("does not let the creator reopen an accepted invite", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), "invites", CODE), {
+        status: "accepted",
+        claimedBy: STRANGER,
+      });
+    });
+
+    await assertFails(
+      updateDoc(doc(asDoer(), "invites", CODE), {
+        status: "pending",
+        claimedBy: null,
+      }),
+    );
+  });
+
+  it("does not let a claimant re-point an invite at another relationship", async () => {
+    await assertFails(
+      updateDoc(doc(asStranger(), "invites", CODE), {
+        status: "accepted",
+        claimedBy: STRANGER,
+        relationshipId: "some-other-relationship",
       }),
     );
   });

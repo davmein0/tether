@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { collection, doc, serverTimestamp, writeBatch } from "firebase/firestore";
 import ErrorBanner from "../components/ErrorBanner";
 import GoalsBoard from "../components/GoalsBoard";
 import useGoals from "../hooks/useGoals";
@@ -50,28 +50,33 @@ export default function GoalsPage({ relationshipId }: Props) {
       return;
     }
 
+    // Batched, so a retry after a failure cannot leave a goal without its
+    // timeline entry or duplicate the half that already landed.
+    const batch = writeBatch(db);
+
+    batch.set(doc(collection(db, "goals")), {
+      relationshipId,
+      title: trimmedTitle,
+      description: trimmedDescription,
+      targetLabel: trimmedTarget,
+      startDate,
+      endDate,
+      status,
+      createdBy: auth.currentUser?.uid ?? "unknown",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+
+    batch.set(doc(collection(db, "timelineEntries")), {
+      relationshipId,
+      type: "goal",
+      title: `Goal started: ${trimmedTitle}`,
+      detail: trimmedDescription,
+      createdAt: serverTimestamp(),
+    });
+
     try {
-      await Promise.all([
-        addDoc(collection(db, "goals"), {
-          relationshipId,
-          title: trimmedTitle,
-          description: trimmedDescription,
-          targetLabel: trimmedTarget,
-          startDate,
-          endDate,
-          status,
-          createdBy: auth.currentUser?.uid ?? "unknown",
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        }),
-        addDoc(collection(db, "timelineEntries"), {
-          relationshipId,
-          type: "goal",
-          title: `Goal started: ${trimmedTitle}`,
-          detail: trimmedDescription,
-          createdAt: serverTimestamp(),
-        }),
-      ]);
+      await batch.commit();
     } catch (caught) {
       console.error("save goal failed:", caught);
       setSaveError("Couldn't save that goal. Please try again.");

@@ -199,7 +199,8 @@ export async function acceptInvite(
   userRole: UserRole,
   code: string,
 ): Promise<RelationshipRecord> {
-  const inviteRef = doc(db, "invites", code.trim().toUpperCase());
+  const normalizedCode = code.trim().toUpperCase();
+  const inviteRef = doc(db, "invites", normalizedCode);
 
   // Re-read both documents inside the transaction: two people racing on the
   // same code would otherwise both pass the "slot is free" check below.
@@ -253,6 +254,9 @@ export async function acceptInvite(
       doerId: nextDoerId,
       supporterId: nextSupporterId,
       status: "active",
+      // The rules require the claim to name the code it came from, so holding
+      // some other pair's code cannot get you into this one.
+      claimedWithCode: normalizedCode,
       updatedAt: serverTimestamp(),
     });
 

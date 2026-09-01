@@ -21,6 +21,8 @@ export interface Relationship {
   doerId: string | null;
   supporterId: string | null;
   status: RelationshipStatus;
+  /** Invite code the second member joined with; the rules check it. */
+  claimedWithCode?: string;
   createdAt?: unknown;
   updatedAt?: unknown;
 }

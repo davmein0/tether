@@ -111,7 +111,10 @@ export default function App() {
     return subscribeToRelationshipForUser(
       firebaseUser.uid,
       appUser.role,
-      setSubscribedRelationship,
+      (next) => {
+        setSubscribedRelationship(next);
+        setRelationshipError(null);
+      },
       (error) => {
         console.error("relationship listener error:", error);
         setRelationshipError(
@@ -126,17 +129,22 @@ export default function App() {
   const relationship =
     firebaseUser && appUser?.role ? subscribedRelationship : null;
 
+  // A pending relationship is half a pair: the shared pages need an accepted
+  // one, while setup stays on screen so the creator can share or cancel the code.
+  const activeRelationship =
+    relationship?.status === "active" ? relationship : null;
+
   useEffect(() => {
     const loadPartnerProfile = async () => {
-      if (!relationship || !firebaseUser || !appUser) {
+      if (!activeRelationship || !firebaseUser || !appUser) {
         setPartnerUser(null);
         return;
       }
 
       const partnerId =
         appUser.role === "doer"
-          ? relationship.supporterId
-          : relationship.doerId;
+          ? activeRelationship.supporterId
+          : activeRelationship.doerId;
 
       if (!partnerId) {
         setPartnerUser(null);
@@ -148,7 +156,7 @@ export default function App() {
     };
 
     void loadPartnerProfile();
-  }, [relationship, firebaseUser, appUser]);
+  }, [activeRelationship, firebaseUser, appUser]);
 
   useEffect(() => {
     if (authStage !== "needs-role") return;
@@ -234,7 +242,7 @@ export default function App() {
             </div>
 
             {/* Partner Profile */}
-            {partnerUser && relationship && (
+            {partnerUser && activeRelationship && (
               <div className="bg-stone-50 rounded-xl border border-stone-200 p-4">
                 <p className="text-xs font-semibold text-stone-600 uppercase tracking-wide mb-3">
                   Your {partnerUser.role === "doer" ? "Mentee" : "Mentor"}
@@ -302,7 +310,7 @@ export default function App() {
             </div>
           )}
 
-          {appUser && firebaseUser && !relationship ? (
+          {appUser && firebaseUser && !activeRelationship ? (
             <ConnectionSimulator
               currentRelationship={relationship}
               onRelationshipChange={setSubscribedRelationship}
@@ -326,24 +334,24 @@ export default function App() {
           </nav>
 
           {page === "goal-log" ? (
-            relationship ? (
-              <GoalLogPage relationshipId={relationship.id} />
+            activeRelationship ? (
+              <GoalLogPage relationshipId={activeRelationship.id} />
             ) : (
               <ConnectRequired action="logging goals" />
             )
           ) : page === "journal" ? (
-            relationship && firebaseUser ? (
+            activeRelationship && firebaseUser ? (
               <JournalPage
-                relationshipId={relationship.id}
+                relationshipId={activeRelationship.id}
                 userId={firebaseUser.uid}
               />
             ) : (
               <ConnectRequired action="journaling" />
             )
           ) : page === "reviews" ? (
-            relationship && firebaseUser && appUser ? (
+            activeRelationship && firebaseUser && appUser ? (
               <ReviewsPage
-                relationshipId={relationship.id}
+                relationshipId={activeRelationship.id}
                 userId={firebaseUser.uid}
                 userRole={appUser.role}
               />
@@ -351,26 +359,26 @@ export default function App() {
               <ConnectRequired action="reviewing progress" />
             )
           ) : page === "goals" ? (
-            relationship ? (
-              <GoalsPage relationshipId={relationship.id} />
+            activeRelationship ? (
+              <GoalsPage relationshipId={activeRelationship.id} />
             ) : (
               <ConnectRequired action="viewing goals" />
             )
           ) : page === "timeline" ? (
-            relationship ? (
-              <TimelinePage relationshipId={relationship.id} />
+            activeRelationship ? (
+              <TimelinePage relationshipId={activeRelationship.id} />
             ) : (
               <ConnectRequired action="using the timeline" />
             )
-          ) : relationship && firebaseUser && appUser?.role === "doer" ? (
+          ) : activeRelationship && firebaseUser && appUser?.role === "doer" ? (
             <DoerDashboard
               currentUserId={firebaseUser.uid}
-              relationshipId={relationship.id}
+              relationshipId={activeRelationship.id}
             />
-          ) : relationship && firebaseUser && appUser?.role === "supporter" ? (
+          ) : activeRelationship && firebaseUser && appUser?.role === "supporter" ? (
             <SupporterDashboard
               currentUserId={firebaseUser.uid}
-              relationshipId={relationship.id}
+              relationshipId={activeRelationship.id}
             />
           ) : (
             <ConnectRequired action="to open shared support" />
