@@ -377,6 +377,36 @@ describe("invites", () => {
   });
 });
 
+describe("relationship status", () => {
+  it("lets a member end an active pair but not revive it", async () => {
+    await assertSucceeds(
+      updateDoc(doc(asDoer(), "relationships", RELATIONSHIP_ID), {
+        status: "ended",
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(asDoer(), "relationships", RELATIONSHIP_ID), {
+        status: "active",
+      }),
+    );
+  });
+
+  it("does not let a member self-activate a pending pair", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "relationships", "solo"), {
+        name: "Doer + supporter",
+        doerId: DOER,
+        supporterId: null,
+        status: "pending",
+      });
+    });
+
+    await assertFails(
+      updateDoc(doc(asDoer(), "relationships", "solo"), { status: "active" }),
+    );
+  });
+});
+
 describe("user profiles", () => {
   it("lets a signed-in user write only their own profile", async () => {
     const db = asDoer();
@@ -385,6 +415,12 @@ describe("user profiles", () => {
     );
     await assertFails(
       setDoc(doc(db, "users", SUPPORTER), { role: "supporter" }),
+    );
+  });
+
+  it("rejects a role outside the two the app knows", async () => {
+    await assertFails(
+      setDoc(doc(asDoer(), "users", DOER), { role: "admin" }),
     );
   });
 

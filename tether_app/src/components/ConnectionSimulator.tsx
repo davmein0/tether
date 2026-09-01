@@ -80,7 +80,7 @@ export default function ConnectionSimulator({
     setError(null);
 
     try {
-      await cancelInvite(invite.id, invite.relationshipId);
+      await cancelInvite(invite.id);
       setInvite(null);
       onRelationshipChange(null);
       setMessage("Invite cancelled. You can create a new one.");

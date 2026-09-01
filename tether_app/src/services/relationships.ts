@@ -187,10 +187,21 @@ export async function createInviteForUser(userId: string, userRole: UserRole) {
  * relationship behind would make `getRelationshipForUser` report the creator as
  * already connected and block them from inviting anyone else.
  */
-export async function cancelInvite(code: string, relationshipId: string) {
+export async function cancelInvite(code: string) {
+  const inviteRef = doc(db, "invites", code);
+  const invite = await getDoc(inviteRef);
+
+  if (!invite.exists()) {
+    throw new Error("That invite no longer exists.");
+  }
+
+  // The relationship comes off the invite rather than the caller, so cancelling
+  // one invite can never take down a different pair.
   const batch = writeBatch(db);
-  batch.delete(doc(db, "invites", code));
-  batch.delete(doc(db, "relationships", relationshipId));
+  batch.delete(inviteRef);
+  batch.delete(
+    doc(db, "relationships", (invite.data() as Invite).relationshipId),
+  );
   await batch.commit();
 }
 
