@@ -1,6 +1,4 @@
-import { Timestamp } from "firebase/firestore";
 import type { GoalReviewRecord, Goal, CustomStrategyRecord } from "../types";
-import "./ProgressAnalytics.css";
 import "./ProgressAnalytics.css";
 
 type Props = {

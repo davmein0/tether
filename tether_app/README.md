@@ -1,103 +1,66 @@
-# React + TypeScript + Vite
+# Tether
 
-## Firebase setup
+Tether pairs someone working on a hard personal goal (a **doer**) with one person who supports them (a **supporter**). The pair share a private space with goals, a timeline of what happened, a journal the supporter can comment on, weekly reviews, and a "struggle" button that sends a high-priority signal plus a guided routine in the moment it is needed.
 
-This app expects Firebase web config values through Vite environment variables.
+Single-page React app talking directly to Firebase — there is no backend server of our own.
 
-1. Copy `.env.example` to `.env.local`.
-2. Fill in the values from your Firebase project settings under `Project settings > General > Your apps > Web app`.
-3. Restart the Vite dev server after changing env values.
+## Stack
 
-Required variables:
+- React 19 + TypeScript, built with Vite 8 (React Compiler enabled)
+- Tailwind CSS 4
+- Firebase: Auth (Google sign-in), Firestore, Storage
+- Vitest for unit tests
 
-- `VITE_FIREBASE_API_KEY`
-- `VITE_FIREBASE_AUTH_DOMAIN`
-- `VITE_FIREBASE_PROJECT_ID`
-- `VITE_FIREBASE_STORAGE_BUCKET`
-- `VITE_FIREBASE_MESSAGING_SENDER_ID`
-- `VITE_FIREBASE_APP_ID`
+## Prerequisites
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+- Node.js `^20.19.0 || >=22.12.0` (Vite 8 engine requirement)
+- A Firebase project with Google sign-in enabled and Firestore in native mode
 
-Currently, two official plugins are available:
+## Getting started
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
-
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+```bash
+cd tether_app
+npm install
+cp .env.example .env.local   # then fill in your Firebase web config
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+`src/services/firebase.ts` throws at startup if any `VITE_FIREBASE_*` variable is missing, so an incomplete `.env.local` fails loudly rather than at the first query. These values are public client config — access control has to come from Firestore security rules.
 
-```js
-// eslint.config.js
-import reactX from "eslint-plugin-react-x";
-import reactDom from "eslint-plugin-react-dom";
+Other scripts:
 
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs["recommended-typescript"],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+```bash
+npm run build       # tsc -b && vite build
+npm run preview     # serve the production build
+npm run lint        # eslint
+npm run test        # vitest unit tests
 ```
 
-Contributions:
+## How it fits together
 
-Big shoutout to Google Search and AI LLMs, particularly
+`src/App.tsx` owns auth state, hash-based routing, and the shared layout. Sign-in goes through `src/auth.ts`; on first sign-in the user picks a role, which is written to `users/{uid}`.
 
--- Codex
--- ChatGPT
--- GitHub Copilot
--- Claude Code
+Two users become a pair via `src/services/relationships.ts`: the first user creates an invite code, the second enters it, and both then read and write the same `relationshipId`. Every document below hangs off that `relationshipId`.
 
-Also, thank you for the YouTube channel Fireship and its Firebase tutorials.
+Pages render per role — `pages/DoerDashboard.tsx` and `pages/SupporterDashboard.tsx` — over the shared data in `hooks/` (`useGoals`, `useTimelineEntries`, `useLatestStruggle`), which subscribe to Firestore with `onSnapshot`.
+
+### Firestore collections
+
+| Collection | Contents |
+| --- | --- |
+| `users/{uid}` | Display name, email, photo, and `role` (`doer` or `supporter`) |
+| `relationships` | The pair: `doerId`, `supporterId`, `status` (`pending` / `active`) |
+| `invites` | One-time invite codes with `code`, `createdBy`, `role`, `status` |
+| `goals` | Goals owned by a relationship, with progress and target dates |
+| `timelineEntries` | Timeline events (`goal`, `reachout`, `meeting`, `metric`) |
+| `events` | Struggle-button signals, including the selected mood |
+| `messages` | Messages between the pair |
+| `journalEntries` | Doer journal entries; comments live in the `comments` subcollection |
+| `goalReviews` | Weekly reviews tied to a goal |
+| `customStrategies` | Strategies the pair added to the struggle routine |
+
+Compound queries (`where("relationshipId", ...)` plus `orderBy("createdAt", ...)`) require composite indexes in the Firebase console; the listener logs a console error with a creation link if one is missing.
+
+## Deployment
+
+`npm run build` emits a static bundle to `dist/`, deployable to Firebase Hosting or any static host. The `VITE_FIREBASE_*` variables must be present at build time, since Vite inlines them into the bundle.
