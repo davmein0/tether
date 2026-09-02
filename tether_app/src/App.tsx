@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import type { User } from "firebase/auth";
 import ConnectionSimulator from "./components/ConnectionSimulator";
+import ErrorBanner from "./components/ErrorBanner";
 import Login from "./components/GoogleLogin";
 import { getUserProfile, saveUserProfile, signInWithGoogle } from "./auth";
 import DoerDashboard from "./pages/DoerDashboard";
@@ -12,25 +13,24 @@ import ReviewsPage from "./pages/Reviews";
 import SupporterDashboard from "./pages/SupporterDashboard";
 import TimelinePage from "./pages/TimelinePage";
 import { auth } from "./services/firebase";
-import { getRelationshipForUser } from "./services/relationships";
+import { subscribeToRelationshipForUser } from "./services/relationships";
 import type { AppUser, RelationshipRecord, UserRole } from "./types";
 
-type AppPage =
-  | "dashboard"
-  | "goal-log"
-  | "goals"
-  | "timeline"
-  | "journal"
-  | "reviews";
+const PAGES = [
+  { id: "dashboard", label: "Dashboard", hash: "" },
+  { id: "goals", label: "Goals", hash: "goals" },
+  { id: "timeline", label: "Timeline", hash: "timeline" },
+  { id: "journal", label: "Journal", hash: "journal" },
+  { id: "reviews", label: "Reviews", hash: "reviews" },
+  { id: "goal-log", label: "Goal log", hash: "goal-log", hidden: true },
+] as const;
+
+type AppPage = (typeof PAGES)[number]["id"];
 type AuthStage = "loading" | "signed-out" | "needs-role" | "ready";
 
 function getPageFromHash(): AppPage {
-  if (window.location.hash === "#goal-log") return "goal-log";
-  if (window.location.hash === "#goals") return "goals";
-  if (window.location.hash === "#timeline") return "timeline";
-  if (window.location.hash === "#journal") return "journal";
-  if (window.location.hash === "#reviews") return "reviews";
-  return "dashboard";
+  const hash = window.location.hash.replace(/^#/, "");
+  return PAGES.find((entry) => entry.hash === hash)?.id ?? "dashboard";
 }
 
 const eyebrow =
@@ -42,17 +42,32 @@ const navActive =
 const authPanel =
   "bg-white rounded-3xl border border-stone-200 shadow-sm flex flex-col gap-5 p-6 min-h-[220px] justify-center";
 
+function ConnectRequired({ action }: { action: string }) {
+  return (
+    <section className={authPanel}>
+      <p className={eyebrow}>Connect first</p>
+      <h3 className="text-2xl font-bold text-stone-900 leading-snug [font-family:var(--font-serif)]">
+        Create or accept an invite before {action}.
+      </h3>
+    </section>
+  );
+}
+
 export default function App() {
   const [page, setPage] = useState<AppPage>(getPageFromHash);
   const [authStage, setAuthStage] = useState<AuthStage>("loading");
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
-  const [relationship, setRelationship] = useState<RelationshipRecord | null>(
-    null,
-  );
+  const [subscribedRelationship, setSubscribedRelationship] =
+    useState<RelationshipRecord | null>(null);
   const [partnerUser, setPartnerUser] = useState<AppUser | null>(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isSavingRole, setIsSavingRole] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [relationshipError, setRelationshipError] = useState<string | null>(
+    null,
+  );
+  const roleDialogRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const syncPage = () => setPage(getPageFromHash());
@@ -68,7 +83,7 @@ export default function App() {
 
       if (!user) {
         setAppUser(null);
-        setRelationship(null);
+        setSubscribedRelationship(null);
         setAuthStage("signed-out");
         return;
       }
@@ -88,36 +103,48 @@ export default function App() {
     return unsubscribe;
   }, []);
 
+  // Live, so the pending-invite screen swaps for the dashboard the moment the
+  // other person accepts.
   useEffect(() => {
-    const loadRelationship = async () => {
-      if (!firebaseUser || !appUser?.role) {
-        setRelationship(null);
-        setPartnerUser(null);
-        return;
-      }
+    if (!firebaseUser || !appUser?.role) return;
 
-      const nextRelationship = await getRelationshipForUser(
-        firebaseUser.uid,
-        appUser.role as UserRole,
-      );
-
-      setRelationship(nextRelationship);
-    };
-
-    void loadRelationship();
+    return subscribeToRelationshipForUser(
+      firebaseUser.uid,
+      appUser.role,
+      (next) => {
+        setSubscribedRelationship(next);
+        setRelationshipError(null);
+      },
+      (error) => {
+        console.error("relationship listener error:", error);
+        setRelationshipError(
+          "We couldn't load your connection. Check your network and reload.",
+        );
+      },
+    );
   }, [appUser, firebaseUser]);
+
+  // Ignore the last subscription's value while signed out instead of clearing
+  // it from an effect.
+  const relationship =
+    firebaseUser && appUser?.role ? subscribedRelationship : null;
+
+  // A pending relationship is half a pair: the shared pages need an accepted
+  // one, while setup stays on screen so the creator can share or cancel the code.
+  const activeRelationship =
+    relationship?.status === "active" ? relationship : null;
 
   useEffect(() => {
     const loadPartnerProfile = async () => {
-      if (!relationship || !firebaseUser || !appUser) {
+      if (!activeRelationship || !firebaseUser || !appUser) {
         setPartnerUser(null);
         return;
       }
 
       const partnerId =
         appUser.role === "doer"
-          ? relationship.supporterId
-          : relationship.doerId;
+          ? activeRelationship.supporterId
+          : activeRelationship.doerId;
 
       if (!partnerId) {
         setPartnerUser(null);
@@ -129,58 +156,53 @@ export default function App() {
     };
 
     void loadPartnerProfile();
-  }, [relationship, firebaseUser, appUser]);
+  }, [activeRelationship, firebaseUser, appUser]);
+
+  useEffect(() => {
+    if (authStage !== "needs-role") return;
+    roleDialogRef.current?.focus();
+  }, [authStage]);
 
   const navigate = (nextPage: AppPage) => {
-    if (nextPage === "goal-log") {
-      window.location.hash = "goal-log";
-      return;
-    }
-
-    if (nextPage === "goals") {
-      window.location.hash = "goals";
-      return;
-    }
-
-    if (nextPage === "timeline") {
-      window.location.hash = "timeline";
-      return;
-    }
-
-    if (nextPage === "journal") {
-      window.location.hash = "journal";
-      return;
-    }
-
-    if (nextPage === "reviews") {
-      window.location.hash = "reviews";
-      return;
-    }
-
-    window.location.hash = "";
+    const hash = PAGES.find((entry) => entry.id === nextPage)?.hash ?? "";
+    window.location.assign(`#${hash}`);
   };
 
   const handleSignIn = async () => {
     setIsSigningIn(true);
-    await signInWithGoogle();
-    setIsSigningIn(false);
+    setAuthError(null);
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+      setAuthError("Google sign-in failed. Please try again.");
+    } finally {
+      setIsSigningIn(false);
+    }
   };
 
   const handleRoleSelection = async (role: UserRole) => {
     if (!firebaseUser) return;
 
     setIsSavingRole(true);
-    const profile = await saveUserProfile(firebaseUser, role);
-    setAppUser(profile);
-    setAuthStage("ready");
-    setIsSavingRole(false);
+    setAuthError(null);
+    try {
+      const profile = await saveUserProfile(firebaseUser, role);
+      setAppUser(profile);
+      setAuthStage("ready");
+    } catch (error) {
+      console.error("role save error:", error);
+      setAuthError("We couldn't save your role. Please try again.");
+    } finally {
+      setIsSavingRole(false);
+    }
   };
 
   const handleSignOut = async () => {
     await signOut(auth);
     setAppUser(null);
     setFirebaseUser(null);
-    setRelationship(null);
+    setSubscribedRelationship(null);
     setAuthStage("signed-out");
   };
 
@@ -220,7 +242,7 @@ export default function App() {
             </div>
 
             {/* Partner Profile */}
-            {partnerUser && relationship && (
+            {partnerUser && activeRelationship && (
               <div className="bg-stone-50 rounded-xl border border-stone-200 p-4">
                 <p className="text-xs font-semibold text-stone-600 uppercase tracking-wide mb-3">
                   Your {partnerUser.role === "doer" ? "Mentee" : "Mentor"}
@@ -239,6 +261,8 @@ export default function App() {
                 </div>
               </div>
             )}
+
+            {authError && <ErrorBanner message={authError} />}
 
             {/* Auth Buttons */}
             <div className="flex gap-2">
@@ -277,132 +301,87 @@ export default function App() {
         </section>
       ) : (
         <>
-          {appUser && firebaseUser && !relationship ? (
+          {relationshipError && (
+            <div className="mb-6">
+              <ErrorBanner
+                message={relationshipError}
+                onRetry={() => window.location.reload()}
+              />
+            </div>
+          )}
+
+          {appUser && firebaseUser && !activeRelationship ? (
             <ConnectionSimulator
               currentRelationship={relationship}
-              onRelationshipChange={setRelationship}
+              onRelationshipChange={setSubscribedRelationship}
               userId={firebaseUser.uid}
-              userRole={appUser.role as UserRole}
+              userRole={appUser.role}
             />
           ) : null}
 
           <nav className="flex gap-2 mb-6" aria-label="Primary">
-            <button
-              className={page === "dashboard" ? navActive : navSecondary}
-              onClick={() => navigate("dashboard")}
-              type="button"
-            >
-              Dashboard
-            </button>
-            <button
-              className={page === "goals" ? navActive : navSecondary}
-              onClick={() => navigate("goals")}
-              type="button"
-            >
-              Goals
-            </button>
-            <button
-              className={page === "timeline" ? navActive : navSecondary}
-              onClick={() => navigate("timeline")}
-              type="button"
-            >
-              Timeline
-            </button>
-            <button
-              className={page === "journal" ? navActive : navSecondary}
-              onClick={() => navigate("journal")}
-              type="button"
-            >
-              Journal
-            </button>
-            <button
-              className={page === "reviews" ? navActive : navSecondary}
-              onClick={() => navigate("reviews")}
-              type="button"
-            >
-              Reviews
-            </button>
+            {PAGES.filter((entry) => !("hidden" in entry)).map((entry) => (
+              <button
+                aria-current={page === entry.id ? "page" : undefined}
+                className={page === entry.id ? navActive : navSecondary}
+                key={entry.id}
+                onClick={() => navigate(entry.id)}
+                type="button"
+              >
+                {entry.label}
+              </button>
+            ))}
           </nav>
 
           {page === "goal-log" ? (
-            relationship ? (
-              <GoalLogPage relationshipId={relationship.id} />
+            activeRelationship ? (
+              <GoalLogPage relationshipId={activeRelationship.id} />
             ) : (
-              <section className={authPanel}>
-                <p className={eyebrow}>Connect first</p>
-                <h3 className="text-2xl font-bold text-stone-900 leading-snug [font-family:var(--font-serif)]">
-                  Create or accept an invite before logging goals.
-                </h3>
-              </section>
+              <ConnectRequired action="logging goals" />
             )
           ) : page === "journal" ? (
-            relationship && firebaseUser ? (
+            activeRelationship && firebaseUser ? (
               <JournalPage
-                relationshipId={relationship.id}
+                relationshipId={activeRelationship.id}
                 userId={firebaseUser.uid}
               />
             ) : (
-              <section className={authPanel}>
-                <p className={eyebrow}>Connect first</p>
-                <h3 className="text-2xl font-bold text-stone-900 leading-snug [font-family:var(--font-serif)]">
-                  Create or accept an invite before journaling.
-                </h3>
-              </section>
+              <ConnectRequired action="journaling" />
             )
           ) : page === "reviews" ? (
-            relationship && firebaseUser && appUser ? (
+            activeRelationship && firebaseUser && appUser ? (
               <ReviewsPage
-                relationshipId={relationship.id}
+                relationshipId={activeRelationship.id}
                 userId={firebaseUser.uid}
-                userRole={appUser.role as UserRole}
+                userRole={appUser.role}
               />
             ) : (
-              <section className={authPanel}>
-                <p className={eyebrow}>Connect first</p>
-                <h3 className="text-2xl font-bold text-stone-900 leading-snug [font-family:var(--font-serif)]">
-                  Create or accept an invite before reviewing progress.
-                </h3>
-              </section>
+              <ConnectRequired action="reviewing progress" />
             )
           ) : page === "goals" ? (
-            relationship ? (
-              <GoalsPage relationshipId={relationship.id} />
+            activeRelationship ? (
+              <GoalsPage relationshipId={activeRelationship.id} />
             ) : (
-              <section className={authPanel}>
-                <p className={eyebrow}>Connect first</p>
-                <h3 className="text-2xl font-bold text-stone-900 leading-snug [font-family:var(--font-serif)]">
-                  Create or accept an invite before viewing goals.
-                </h3>
-              </section>
+              <ConnectRequired action="viewing goals" />
             )
           ) : page === "timeline" ? (
-            relationship ? (
-              <TimelinePage relationshipId={relationship.id} />
+            activeRelationship ? (
+              <TimelinePage relationshipId={activeRelationship.id} />
             ) : (
-              <section className={authPanel}>
-                <p className={eyebrow}>Connect first</p>
-                <h3 className="text-2xl font-bold text-stone-900 leading-snug [font-family:var(--font-serif)]">
-                  Create or accept an invite before using the timeline.
-                </h3>
-              </section>
+              <ConnectRequired action="using the timeline" />
             )
-          ) : relationship && firebaseUser && appUser?.role === "doer" ? (
+          ) : activeRelationship && firebaseUser && appUser?.role === "doer" ? (
             <DoerDashboard
               currentUserId={firebaseUser.uid}
-              relationshipId={relationship.id}
+              relationshipId={activeRelationship.id}
             />
-          ) : relationship && firebaseUser && appUser?.role === "supporter" ? (
+          ) : activeRelationship && firebaseUser && appUser?.role === "supporter" ? (
             <SupporterDashboard
               currentUserId={firebaseUser.uid}
-              relationshipId={relationship.id}
+              relationshipId={activeRelationship.id}
             />
           ) : (
-            <section className={authPanel}>
-              <p className={eyebrow}>Connect first</p>
-              <h3 className="text-2xl font-bold text-stone-900 leading-snug [font-family:var(--font-serif)]">
-                Create or accept an invite to open shared support.
-              </h3>
-            </section>
+            <ConnectRequired action="to open shared support" />
           )}
         </>
       )}
@@ -415,8 +394,10 @@ export default function App() {
           <section
             aria-labelledby="role-modal-title"
             aria-modal="true"
-            className="w-[min(560px,100%)] flex flex-col gap-4 p-7 rounded-3xl border border-stone-200 bg-white shadow-xl"
+            className="w-[min(560px,100%)] flex flex-col gap-4 p-7 rounded-3xl border border-stone-200 bg-white shadow-xl focus:outline-none"
+            ref={roleDialogRef}
             role="dialog"
+            tabIndex={-1}
           >
             <p className={eyebrow}>Choose your role</p>
             <h3

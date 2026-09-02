@@ -1,12 +1,9 @@
-import { useEffect, useRef, useState } from "react";
-import {
-  Timestamp,
-  collection,
-  onSnapshot,
-  query,
-  where,
-} from "firebase/firestore";
+import { useEffect, useRef } from "react";
+import { Timestamp, collection, query, where } from "firebase/firestore";
 import { db } from "../services/firebase";
+import { useFirestoreQuery } from "../hooks/useFirestoreQuery";
+import { toMillis } from "../lib/timestamps";
+import ErrorBanner from "./ErrorBanner";
 import JournalComments from "./JournalComments";
 import type { JournalEntry } from "../types";
 import "./JournalList.css";
@@ -36,44 +33,35 @@ export default function JournalList({
   currentUserId,
   peerLabel = "Them",
 }: Props) {
-  const [entries, setEntries] = useState<(JournalEntry & { id: string })[]>([]);
+  const { items, error } = useFirestoreQuery<JournalEntry>(
+    () =>
+      userId
+        ? query(
+            collection(db, "journalEntries"),
+            where("relationshipId", "==", relationshipId),
+            where("userId", "==", userId),
+          )
+        : query(
+            collection(db, "journalEntries"),
+            where("relationshipId", "==", relationshipId),
+          ),
+    [relationshipId, userId],
+  );
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    let q = query(
-      collection(db, "journalEntries"),
-      where("relationshipId", "==", relationshipId),
-    );
-
-    if (userId) {
-      q = query(
-        collection(db, "journalEntries"),
-        where("relationshipId", "==", relationshipId),
-        where("userId", "==", userId),
-      );
-    }
-
-    const unsub = onSnapshot(q, (snapshot) => {
-      const entries = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as (JournalEntry & { id: string })[];
-
-      entries.sort((a, b) => {
-        const aTime = (a.createdAt as Timestamp)?.seconds ?? 0;
-        const bTime = (b.createdAt as Timestamp)?.seconds ?? 0;
-        return bTime - aTime; // Most recent first
-      });
-
-      setEntries(entries);
-    });
-
-    return unsub;
-  }, [relationshipId, userId]);
+  const entries = [...items].sort(
+    (a, b) => toMillis(b.createdAt) - toMillis(a.createdAt),
+  );
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [entries]);
+  }, [entries.length]);
+
+  if (error) {
+    return (
+      <ErrorBanner message="We couldn't load journal entries. Check your connection and reload." />
+    );
+  }
 
   if (entries.length === 0) {
     return (

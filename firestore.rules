@@ -1,0 +1,218 @@
+rules_version = '2';
+
+// Every collection below is scoped to a relationship. Access is granted only to
+// the two accounts recorded on that relationship document, so nothing here can
+// be read by simply knowing a document ID.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function relationshipData(relationshipId) {
+      return get(/databases/$(database)/documents/relationships/$(relationshipId)).data;
+    }
+
+    function isMember(relationshipId) {
+      let data = relationshipData(relationshipId);
+      return signedIn() && (data.doerId == uid() || data.supporterId == uid());
+    }
+
+    function memberOfIncoming() {
+      return isMember(request.resource.data.relationshipId);
+    }
+
+    function memberOfExisting() {
+      return isMember(resource.data.relationshipId);
+    }
+
+    // A document can never be moved into another pair's relationship.
+    function staysInRelationship() {
+      return request.resource.data.relationshipId == resource.data.relationshipId;
+    }
+
+    function inviteFor(code) {
+      return get(/databases/$(database)/documents/invites/$(code)).data;
+    }
+
+    match /users/{userId} {
+      // Members look each other's profile up by uid to render the partner card.
+      allow get: if signedIn();
+      allow list: if false;
+      allow create, update: if signedIn()
+        && uid() == userId
+        && request.resource.data.role in ['doer', 'supporter'];
+      allow delete: if false;
+    }
+
+    match /relationships/{relationshipId} {
+      // `get` also covers the accepting user, who is not a member yet but must
+      // read the pending relationship inside the accept transaction. A pending
+      // relationship holds no content, and claiming it still requires the code.
+      allow get: if signedIn()
+        && (resource.data.doerId == uid()
+            || resource.data.supporterId == uid()
+            || resource.data.status == 'pending');
+      allow list: if signedIn()
+        && (resource.data.doerId == uid() || resource.data.supporterId == uid());
+
+      allow create: if signedIn()
+        && request.resource.data.status == 'pending'
+        && (request.resource.data.doerId == uid()
+            || request.resource.data.supporterId == uid())
+        && (request.resource.data.doerId == null
+            || request.resource.data.supporterId == null);
+
+      // A claim has to present a live invite code pointing back at *this*
+      // relationship, so holding any code is not enough to join any pair.
+      function claimBackedByInvite(role) {
+        let code = request.resource.data.claimedWithCode;
+        return code is string
+          && exists(/databases/$(database)/documents/invites/$(code))
+          && inviteFor(code).relationshipId == relationshipId
+          && inviteFor(code).status == 'pending'
+          && inviteFor(code).targetRole == role
+          && inviteFor(code).expiresAt > request.time;
+      }
+
+      // An ended pair stays ended, and only a claim can activate a pending one.
+      function allowedStatusChange() {
+        return request.resource.data.status == resource.data.status
+          || (resource.data.status == 'active'
+              && request.resource.data.status == 'ended');
+      }
+
+      // Either an existing member editing, or a newcomer claiming the one empty
+      // slot. The slot they are not claiming has to stay untouched.
+      allow update: if signedIn() && (
+        // Members can change everything except who the two people are.
+        ((resource.data.doerId == uid() || resource.data.supporterId == uid())
+            && request.resource.data.doerId == resource.data.doerId
+            && request.resource.data.supporterId == resource.data.supporterId
+            && allowedStatusChange())
+        || (resource.data.status == 'pending'
+            && resource.data.doerId == null
+            && request.resource.data.doerId == uid()
+            && request.resource.data.supporterId == resource.data.supporterId
+            && claimBackedByInvite('doer'))
+        || (resource.data.status == 'pending'
+            && resource.data.supporterId == null
+            && request.resource.data.supporterId == uid()
+            && request.resource.data.doerId == resource.data.doerId
+            && claimBackedByInvite('supporter'))
+      );
+
+      // Only to withdraw an invite that nobody accepted.
+      allow delete: if signedIn()
+        && resource.data.status == 'pending'
+        && (resource.data.doerId == uid() || resource.data.supporterId == uid());
+    }
+
+    // The invite code is the document ID, so `get` is gated on knowing the code
+    // while `list` is restricted to the creator: codes cannot be enumerated.
+    match /invites/{code} {
+      allow get: if signedIn();
+      allow list: if signedIn() && resource.data.createdBy == uid();
+
+      allow create: if signedIn()
+        && request.resource.data.createdBy == uid()
+        && request.resource.data.status == 'pending'
+        && request.resource.data.claimedBy == null;
+
+      // An accepted invite is final: neither side can reopen or re-point it.
+      allow update: if signedIn()
+        && resource.data.status == 'pending'
+        && request.resource.data.code == resource.data.code
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.relationshipId == resource.data.relationshipId
+        && (
+          (resource.data.createdBy == uid()
+              && request.resource.data.claimedBy == null)
+          || (request.resource.data.status == 'accepted'
+              && request.resource.data.claimedBy == uid()
+              && resource.data.expiresAt > request.time)
+        );
+
+      allow delete: if signedIn()
+        && resource.data.createdBy == uid()
+        && resource.data.status == 'pending';
+    }
+
+    match /goals/{goalId} {
+      allow read: if memberOfExisting();
+      allow create: if memberOfIncoming();
+      allow update: if memberOfExisting() && staysInRelationship();
+      allow delete: if memberOfExisting();
+    }
+
+    match /timelineEntries/{entryId} {
+      allow read: if memberOfExisting();
+      allow create: if memberOfIncoming();
+      allow update: if memberOfExisting() && staysInRelationship();
+      allow delete: if memberOfExisting();
+    }
+
+    match /events/{eventId} {
+      allow read: if memberOfExisting();
+      allow create: if memberOfIncoming();
+      allow update: if memberOfExisting() && staysInRelationship();
+      allow delete: if memberOfExisting();
+    }
+
+    match /messages/{messageId} {
+      allow read: if memberOfExisting();
+      allow create: if memberOfIncoming()
+        && request.resource.data.senderId == uid();
+      // Messages are part of a support history; neither side can rewrite them.
+      allow update, delete: if false;
+    }
+
+    match /journalEntries/{entryId} {
+      allow read: if memberOfExisting();
+      allow create: if memberOfIncoming()
+        && request.resource.data.userId == uid();
+      allow update: if memberOfExisting()
+        && resource.data.userId == uid()
+        && request.resource.data.userId == resource.data.userId
+        && staysInRelationship();
+      allow delete: if memberOfExisting() && resource.data.userId == uid();
+
+      match /comments/{commentId} {
+        function parentRelationshipId() {
+          return get(/databases/$(database)/documents/journalEntries/$(entryId)).data.relationshipId;
+        }
+
+        allow read: if isMember(parentRelationshipId());
+        allow create: if isMember(parentRelationshipId())
+          && request.resource.data.authorId == uid();
+        allow update: if isMember(parentRelationshipId())
+          && resource.data.authorId == uid()
+          && request.resource.data.authorId == resource.data.authorId;
+        allow delete: if isMember(parentRelationshipId())
+          && resource.data.authorId == uid();
+      }
+    }
+
+    match /goalReviews/{reviewId} {
+      allow read: if memberOfExisting();
+      allow create: if memberOfIncoming();
+      allow update: if memberOfExisting() && staysInRelationship();
+      allow delete: if memberOfExisting();
+    }
+
+    match /customStrategies/{strategyId} {
+      allow read: if memberOfExisting();
+      allow create: if memberOfIncoming();
+      allow update: if memberOfExisting() && staysInRelationship();
+      allow delete: if memberOfExisting();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

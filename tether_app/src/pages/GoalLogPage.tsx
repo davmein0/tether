@@ -1,3 +1,4 @@
+import ErrorBanner from "../components/ErrorBanner";
 import useGoals from "../hooks/useGoals";
 
 type Props = {
@@ -7,7 +8,7 @@ type Props = {
 const eyebrow = "text-[11px] font-semibold tracking-[0.15em] uppercase text-amber-700 mb-1";
 
 export default function GoalLogPage({ relationshipId }: Props) {
-  const goals = useGoals(relationshipId);
+  const { items: goals, error } = useGoals(relationshipId);
 
   return (
     <section className="bg-white rounded-3xl border border-stone-200 shadow-sm flex flex-col gap-5 p-6">
@@ -40,16 +41,18 @@ export default function GoalLogPage({ relationshipId }: Props) {
             <span className="bg-amber-50 text-amber-700 text-xs font-semibold px-3 py-1 rounded-full">{goals.length} total</span>
           </div>
 
+          {error && <ErrorBanner message="Couldn't load goals." />}
+
           <div className="flex flex-col gap-3">
             {goals.length === 0 ? (
               <p className="text-stone-400 text-xs p-4 rounded-xl border border-dashed border-stone-200 bg-white">
                 No goals yet. Add one to start building your shared roadmap.
               </p>
             ) : (
-              goals.map((goal, index) => (
+              goals.map((goal) => (
                 <article
                   className="bg-white rounded-xl border border-stone-100 flex flex-col gap-3 p-4"
-                  key={`${goal.title}-${index}`}
+                  key={goal.id}
                 >
                   <div className="flex justify-between items-start gap-4">
                     <div>
