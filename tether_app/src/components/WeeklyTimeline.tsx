@@ -50,7 +50,7 @@ const typeLabel: Record<string, string> = {
 };
 
 export default function WeeklyTimeline({ relationshipId }: Props) {
-  const entries = useTimelineEntries(relationshipId);
+  const { items: entries } = useTimelineEntries(relationshipId);
   const weekDays = useMemo(() => getMondayWeek(), []);
   const today = new Date();
 

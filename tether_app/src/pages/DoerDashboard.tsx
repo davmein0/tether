@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import ErrorBanner from "../components/ErrorBanner";
 import GoalsBoard from "../components/GoalsBoard";
 import MessageList from "../components/MessageList";
 import StruggleButton from "../components/StruggleButton";
@@ -33,18 +34,26 @@ const typeLabel: Record<string, string> = {
 export default function DoerDashboard({ relationshipId, currentUserId }: Props) {
   const [draft, setDraft] = useState("");
   const [showRoutine, setShowRoutine] = useState(false);
-  const entries = useTimelineEntries(relationshipId);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const { items: entries } = useTimelineEntries(relationshipId);
   const recentEntries = entries.slice(0, 4);
 
   const sendSupportMessage = async () => {
     const trimmedDraft = draft.trim();
     if (!trimmedDraft) return;
-    await addDoc(collection(db, "messages"), {
-      relationshipId,
-      senderId: currentUserId,
-      text: trimmedDraft,
-      createdAt: serverTimestamp(),
-    });
+    try {
+      await addDoc(collection(db, "messages"), {
+        relationshipId,
+        senderId: currentUserId,
+        text: trimmedDraft,
+        createdAt: serverTimestamp(),
+      });
+    } catch (caught) {
+      console.error("send message failed:", caught);
+      setSendError("Your message didn't send. Please try again.");
+      return;
+    }
+    setSendError(null);
     setDraft("");
   };
 
@@ -88,12 +97,12 @@ export default function DoerDashboard({ relationshipId, currentUserId }: Props) 
             </p>
           ) : (
             <div className="flex flex-col gap-2">
-              {recentEntries.map((entry, i) => {
+              {recentEntries.map((entry) => {
                 const date = toDate(entry.createdAt);
                 return (
                   <div
                     className="flex gap-3 items-start bg-white border border-stone-100 rounded-xl px-4 py-3"
-                    key={i}
+                    key={entry.id}
                   >
                     <span
                       className={`shrink-0 text-[10px] font-semibold px-2 py-1 rounded-md mt-0.5 ${
@@ -132,6 +141,7 @@ export default function DoerDashboard({ relationshipId, currentUserId }: Props) 
         </div>
 
         <div className="flex flex-col gap-3">
+          {sendError && <ErrorBanner message={sendError} />}
           <textarea
             className="w-full bg-white border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400 resize-none"
             onChange={(event) => setDraft(event.target.value)}
