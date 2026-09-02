@@ -80,6 +80,11 @@ An invite code is the invite document's id, so the rules can allow a direct `get
 
 `npm run test:rules` boots the Firestore emulator and asserts the rules from the perspective of a doer, a supporter, and a stranger; it needs no Firebase project or credentials.
 
+### Feature docs
+
+- [`docs/journal.md`](../docs/journal.md) — journal entries, image uploads, comments
+- [`docs/reviews.md`](../docs/reviews.md) — goal reviews, custom strategies, progress analytics
+
 ## Deployment
 
 `npm run build` emits a static bundle to `dist/`, deployable to Firebase Hosting or any static host. The `VITE_FIREBASE_*` variables must be present at build time, since Vite inlines them into the bundle.
